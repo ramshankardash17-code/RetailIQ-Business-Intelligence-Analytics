@@ -1,0 +1,16 @@
+promo_id,promo_name,promo_type,discount_pct,start_date,end_date
+PRM001,New Year Clearance 2023,Clearance,20.0,2023-01-01,2023-01-15
+PRM002,Spring Style Refresh 2023,Holiday Sale,15.0,2023-03-20,2023-04-05
+PRM003,Summer Outdoor Blast 2023,Seasonal,12.0,2023-06-15,2023-07-10
+PRM004,Back to Campus 2023,Flash Sale,18.0,2023-08-15,2023-09-05
+PRM005,Black Friday & Cyber Week 2023,Holiday Sale,25.0,2023-11-20,2023-11-30
+PRM006,Holiday Season Finale 2023,Holiday Sale,20.0,2023-12-15,2023-12-31
+PRM007,New Year Clearance 2024,Clearance,20.0,2024-01-01,2024-01-15
+PRM008,Memorial Weekend 2024,Flash Sale,15.0,2024-05-24,2024-05-29
+PRM009,Mid-Year Tech Fest 2024,Seasonal,18.0,2024-07-10,2024-07-22
+PRM010,Black Friday Mega Deal 2024,Holiday Sale,30.0,2024-11-22,2024-12-02
+PRM011,Christmas Savings 2024,Holiday Sale,22.0,2024-12-16,2024-12-31
+PRM012,Spring Blossom 2025,Seasonal,15.0,2025-03-15,2025-04-01
+PRM013,Summer Clearance 2025,Clearance,20.0,2025-07-01,2025-07-15
+PRM014,Black Friday Extravaganza 2025,Holiday Sale,30.0,2025-11-21,2025-12-01
+PRM015,End of Year Gala 2025,Holiday Sale,25.0,2025-12-18,2025-12-31

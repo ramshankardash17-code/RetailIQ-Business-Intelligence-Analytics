@@ -1,0 +1,111 @@
+# =============================================================================
+# RetailIQ — Git Ignore Configuration
+# =============================================================================
+
+# Environment Variables & Secrets
+.env
+.env.*
+*.env
+!.env.example
+*.pem
+*.key
+*.cert
+*.pfx
+secrets/
+credentials.json
+
+# MySQL / Database Credentials & Dumps
+*.sql.gz
+*.sql.tar.gz
+*.dump
+mysql.log
+*.sqlite3
+
+# Python & Virtual Environments
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+develop-eggs/
+downloads/
+eggs/
+.eggs/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environments (specific root/virtualenv dirs)
+venv/
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+/bin/
+/include/
+/Lib/
+/Scripts/
+
+# Testing & Coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+
+# Type Checking & Linting
+.mypy_cache/
+.pytype/
+.ruff_cache/
+.oxlint_cache/
+
+# Node & Frontend Build Artifacts
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+dist/
+dist-ssr/
+*.local
+
+# IDE & Editor Files
+.vscode/
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+*~
+*.sublime-project
+*.sublime-workspace
+
+# Operating System Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+[Dd]esktop.ini
+$RECYCLE.BIN/
+
+# Logs & Temporary Files
+*.log
+logs/
+*.tmp
+*.temp
+*.bak
+*.cache

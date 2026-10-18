@@ -1,0 +1,21 @@
+store_id,store_name,city,state,region,store_type,square_feet,opening_date,manager_name
+STR101,RetailIQ New York Center,New York,NY,North,Flagship,8500,2019-04-05,Daniel Perez
+STR102,RetailIQ Boston Center,Boston,MA,North,Outlet,3000,2018-02-07,Lucas Taylor
+STR103,RetailIQ Philadelphia Center,Philadelphia,PA,North,Shopping Mall,7000,2019-08-19,Evelyn Sanchez
+STR104,RetailIQ Chicago Center,Chicago,IL,North,Shopping Mall,7000,2020-05-05,Amelia Harris
+STR105,RetailIQ Los Angeles Galleria,Los Angeles,CA,West,Flagship,4500,2021-02-12,Sebastian Martin
+STR106,RetailIQ San Francisco Galleria,San Francisco,CA,West,Flagship,12000,2022-02-13,Olivia Moore
+STR107,RetailIQ Seattle Galleria,Seattle,WA,West,High Street,4500,2018-01-22,Lucas Harris
+STR108,RetailIQ Denver Galleria,Denver,CO,West,Flagship,6000,2018-07-09,Scarlett Lee
+STR109,RetailIQ Houston Galleria,Houston,TX,South,Shopping Mall,5500,2020-04-22,Evelyn Thompson
+STR110,RetailIQ Dallas Center,Dallas,TX,South,Shopping Mall,4500,2019-08-13,Evelyn Robinson
+STR111,RetailIQ Austin Plaza,Austin,TX,South,High Street,3000,2019-01-26,Henry Gonzalez
+STR112,RetailIQ Atlanta Galleria,Atlanta,GA,South,Flagship,6000,2022-12-11,Amelia Lee
+STR113,RetailIQ Miami Square,Miami,FL,South,Outlet,7000,2019-05-05,Harper White
+STR114,RetailIQ Washington Galleria,Washington,DC,East,Outlet,7000,2020-04-05,Oliver Thomas
+STR115,RetailIQ Charlotte Center,Charlotte,NC,East,Flagship,4500,2019-11-06,Ella Martin
+STR116,RetailIQ Baltimore Center,Baltimore,MD,East,Outlet,7000,2022-08-17,Benjamin Moore
+STR117,RetailIQ Phoenix Center,Phoenix,AZ,Central,Flagship,15000,2020-11-11,Isabella Martinez
+STR118,RetailIQ Indianapolis Square,Indianapolis,IN,Central,Shopping Mall,7000,2018-12-24,Benjamin Taylor
+STR119,RetailIQ Columbus Plaza,Columbus,OH,Central,Flagship,8500,2022-10-07,Mia Lopez
+STR120,RetailIQ Detroit Plaza,Detroit,MI,Central,Flagship,15000,2020-08-01,Isabella Robinson

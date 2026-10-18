@@ -1,0 +1,62 @@
+product_id,product_name,category,subcategory,cost_price,unit_price,target_margin_pct,reorder_point,safety_stock,is_active
+PRD1001,Noise Cancelling Headphones,Electronics,Audio,80.0,199.99,60.0,31,13,1
+PRD1002,Bluetooth Speaker,Electronics,Audio,35.0,79.99,56.24,45,20,1
+PRD1003,Soundbar 5.1,Electronics,Audio,120.0,279.99,57.14,29,13,1
+PRD1004,True Wireless Earbuds,Electronics,Audio,45.0,119.99,62.5,27,12,1
+PRD1005,Pro Laptop 15-inch,Electronics,Computers,650.0,1299.99,50.0,21,9,1
+PRD1006,Ultrabook Slim,Electronics,Computers,520.0,999.99,48.0,27,12,1
+PRD1007,Mechanical Keyboard,Electronics,Computers,40.0,89.99,55.55,38,17,1
+PRD1008,Ergonomic Wireless Mouse,Electronics,Computers,22.0,49.99,55.99,22,9,1
+PRD1009,27-inch 4K Monitor,Electronics,Computers,180.0,349.99,48.57,22,9,1
+PRD1010,Flagship Smartphone 5G,Electronics,Mobile,480.0,899.99,46.67,43,19,1
+PRD1011,Mid-range Smartphone,Electronics,Mobile,210.0,429.99,51.16,35,15,1
+PRD1012,Fast Charging Pad,Electronics,Mobile,12.0,29.99,59.99,22,9,1
+PRD1013,Rugged Phone Case,Electronics,Mobile,6.0,24.99,75.99,44,19,1
+PRD1014,Smart Fitness Watch,Electronics,Wearables,90.0,219.99,59.09,37,16,1
+PRD1015,GPS Sports Watch,Electronics,Wearables,140.0,299.99,53.33,44,19,1
+PRD1016,Fitness Tracker Band,Electronics,Wearables,25.0,59.99,58.33,24,10,1
+PRD1017,Classic Oxford Shirt,Apparel,Men's Clothing,18.0,49.99,63.99,24,10,1
+PRD1018,Slim-Fit Denim Jeans,Apparel,Men's Clothing,24.0,69.99,65.71,41,18,1
+PRD1019,Wool Blend Overcoat,Apparel,Men's Clothing,75.0,189.99,60.52,35,15,1
+PRD1020,Cotton Chinos,Apparel,Men's Clothing,20.0,54.99,63.63,37,16,1
+PRD1021,Casual Crewneck Tee,Apparel,Men's Clothing,8.0,24.99,67.99,25,11,1
+PRD1022,Floral Summer Dress,Apparel,Women's Clothing,22.0,64.99,66.15,28,12,1
+PRD1023,High-Waist Denim,Apparel,Women's Clothing,26.0,74.99,65.33,36,16,1
+PRD1024,Cashmere Cardigan,Apparel,Women's Clothing,45.0,129.99,65.38,39,17,1
+PRD1025,Tailored Blazer,Apparel,Women's Clothing,40.0,119.99,66.66,33,14,1
+PRD1026,Silk Evening Blouse,Apparel,Women's Clothing,30.0,84.99,64.7,26,11,1
+PRD1027,Pro Running Shoes,Apparel,Footwear,45.0,129.99,65.38,37,16,1
+PRD1028,Leather Chelsea Boots,Apparel,Footwear,55.0,149.99,63.33,44,19,1
+PRD1029,Casual Canvas Sneakers,Apparel,Footwear,20.0,59.99,66.66,43,19,1
+PRD1030,Trail Hiking Shoes,Apparel,Footwear,50.0,139.99,64.28,42,18,1
+PRD1031,Polarized Sunglasses,Apparel,Accessories,25.0,79.99,68.75,26,11,1
+PRD1032,Leather Bi-fold Wallet,Apparel,Accessories,15.0,45.0,66.67,42,18,1
+PRD1033,Canvas Travel Backpack,Apparel,Accessories,28.0,69.99,59.99,29,13,1
+PRD1034,Digital Air Fryer XL,Home & Kitchen,Small Appliances,45.0,109.99,59.09,32,14,1
+PRD1035,Espresso Coffee Maker,Home & Kitchen,Small Appliances,110.0,249.99,56.0,41,18,1
+PRD1036,High-Speed Blender,Home & Kitchen,Small Appliances,38.0,89.99,57.77,40,18,1
+PRD1037,Electric Kettle 1.7L,Home & Kitchen,Small Appliances,16.0,39.99,59.99,31,13,1
+PRD1038,Smart Robotic Vacuum,Home & Kitchen,Small Appliances,130.0,299.99,56.67,34,15,1
+PRD1039,10-Piece Non-Stick Cookware Set,Home & Kitchen,Cookware,70.0,179.99,61.11,36,16,1
+PRD1040,Cast Iron Dutch Oven,Home & Kitchen,Cookware,35.0,89.99,61.11,34,15,1
+PRD1041,Stainless Steel Chef Knife,Home & Kitchen,Cookware,18.0,49.99,63.99,23,10,1
+PRD1042,Ceramic Table Lamp,Home & Kitchen,Home Decor,22.0,59.99,63.33,27,12,1
+PRD1043,Egyptian Cotton Bedding Set,Home & Kitchen,Home Decor,40.0,119.99,66.66,27,12,1
+PRD1044,Memory Foam Pillow Set,Home & Kitchen,Home Decor,20.0,54.99,63.63,22,9,1
+PRD1045,Vitamin C Radiance Serum,Health & Beauty,Skincare,12.0,38.0,68.42,30,13,1
+PRD1046,Hyaluronic Acid Moisturizer,Health & Beauty,Skincare,14.0,42.0,66.67,20,9,1
+PRD1047,SPF 50 Daily Sunscreen,Health & Beauty,Skincare,9.0,26.0,65.38,38,17,1
+PRD1048,Anti-Aging Night Cream,Health & Beauty,Skincare,18.0,54.0,66.67,37,16,1
+PRD1049,Sonic Electric Toothbrush,Health & Beauty,Personal Care,30.0,79.99,62.5,27,12,1
+PRD1050,Ionic Hair Dryer,Health & Beauty,Personal Care,28.0,74.99,62.66,38,17,1
+PRD1051,Beard Grooming Kit,Health & Beauty,Personal Care,15.0,39.99,62.49,27,12,1
+PRD1052,Luxury Eau De Parfum 100ml,Health & Beauty,Fragrance,35.0,110.0,68.18,20,9,1
+PRD1053,Floral Citrus Cologne,Health & Beauty,Fragrance,22.0,65.0,66.15,22,9,1
+PRD1054,Adjustable Dumbbell Set,Sports & Outdoors,Fitness Equipment,90.0,229.99,60.87,42,18,1
+PRD1055,Eco Yoga Mat with Strap,Sports & Outdoors,Fitness Equipment,12.0,34.99,65.7,40,18,1
+PRD1056,Resistance Bands Set,Sports & Outdoors,Fitness Equipment,8.0,24.99,67.99,21,9,1
+PRD1057,Speed Jump Rope,Sports & Outdoors,Fitness Equipment,5.0,16.99,70.57,27,12,1
+PRD1058,4-Person Waterproof Camping Tent,Sports & Outdoors,Outdoor Gear,65.0,169.99,61.76,22,9,1
+PRD1059,Thermal Sleeping Bag,Sports & Outdoors,Outdoor Gear,28.0,74.99,62.66,21,9,1
+PRD1060,Insulated Stainless Steel Water Bottle,Sports & Outdoors,Outdoor Gear,9.0,27.99,67.85,30,13,1
+PRD1061,Trekking Poles Pair,Sports & Outdoors,Outdoor Gear,16.0,44.99,64.44,22,9,1

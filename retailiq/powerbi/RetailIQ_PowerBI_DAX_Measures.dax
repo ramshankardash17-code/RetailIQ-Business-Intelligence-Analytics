@@ -1,0 +1,185 @@
+// =============================================================================
+// RetailIQ — Production DAX Measure Library for Power BI Desktop & Service
+// Designed for Star Schema: Fact_Sales linked to Dim_Date, Dim_Customer,
+// Dim_Product, Dim_Store, Dim_Promotion, and Fact_Inventory
+// =============================================================================
+
+// -----------------------------------------------------------------------------
+// SECTION 1: CORE FINANCIAL & VOLUME MEASURES
+// -----------------------------------------------------------------------------
+
+Total Orders = 
+DISTINCTCOUNT(sales[order_id])
+
+Total Units Sold = 
+SUM(sales[quantity])
+
+Total Gross Revenue = 
+SUM(sales[gross_revenue])
+
+Total Discounts Given = 
+SUM(sales[discount_amount])
+
+Total Net Revenue = 
+SUM(sales[net_revenue])
+
+Total Cost of Goods Sold = 
+SUMX(sales, sales[quantity] * sales[cost_price])
+
+Total Net Profit = 
+[Total Net Revenue] - [Total Cost of Goods Sold]
+
+Profit Margin % = 
+DIVIDE([Total Net Profit], [Total Net Revenue], 0)
+
+Average Order Value (AOV) = 
+DIVIDE([Total Net Revenue], [Total Orders], 0)
+
+Average Units Per Order (Basket Depth) = 
+DIVIDE([Total Units Sold], [Total Orders], 0)
+
+Average Selling Price (ASP) = 
+DIVIDE([Total Net Revenue], [Total Units Sold], 0)
+
+Discount Rate % = 
+DIVIDE([Total Discounts Given], [Total Gross Revenue], 0)
+
+// -----------------------------------------------------------------------------
+// SECTION 2: TIME INTELLIGENCE & GROWTH MEASURES (MoM, YoY)
+// -----------------------------------------------------------------------------
+
+Prior Month Net Revenue = 
+CALCULATE(
+    [Total Net Revenue],
+    DATEADD('Dim_Date'[Date], -1, MONTH)
+)
+
+MoM Revenue Growth $ = 
+[Total Net Revenue] - [Prior Month Net Revenue]
+
+MoM Revenue Growth % = 
+DIVIDE([MoM Revenue Growth $], [Prior Month Net Revenue], 0)
+
+Prior Year Net Revenue = 
+CALCULATE(
+    [Total Net Revenue],
+    SAMEPERIODLASTYEAR('Dim_Date'[Date])
+)
+
+YoY Revenue Growth $ = 
+[Total Net Revenue] - [Prior Year Net Revenue]
+
+YoY Revenue Growth % = 
+DIVIDE([YoY Revenue Growth $], [Prior Year Net Revenue], 0)
+
+YoY Profit Growth % = 
+VAR PriorProfit = CALCULATE([Total Net Profit], SAMEPERIODLASTYEAR('Dim_Date'[Date]))
+RETURN
+DIVIDE([Total Net Profit] - PriorProfit, PriorProfit, 0)
+
+Rolling 30-Day Net Revenue = 
+CALCULATE(
+    [Total Net Revenue],
+    DATESINPERIOD('Dim_Date'[Date], LASTDATE('Dim_Date'[Date]), -30, DAY)
+)
+
+Year-to-Date (YTD) Revenue = 
+TOTALYTD([Total Net Revenue], 'Dim_Date'[Date])
+
+Prior Year YTD Revenue = 
+CALCULATE([Year-to-Date (YTD) Revenue], SAMEPERIODLASTYEAR('Dim_Date'[Date]))
+
+// -----------------------------------------------------------------------------
+// SECTION 3: CUSTOMER INTELLIGENCE & RFM MEASURES
+// -----------------------------------------------------------------------------
+
+Total Customers = 
+DISTINCTCOUNT(customers[customer_id])
+
+Active Purchasing Customers = 
+CALCULATE(
+    DISTINCTCOUNT(sales[customer_id]),
+    sales[net_revenue] > 0
+)
+
+Customer Lifetime Value (Average Spend) = 
+DIVIDE([Total Net Revenue], [Total Customers], 0)
+
+Customer Order Frequency = 
+DIVIDE([Total Orders], [Active Purchasing Customers], 0)
+
+Repeat Customer Count = 
+CALCULATE(
+    DISTINCTCOUNT(sales[customer_id]),
+    FILTER(
+        VALUES(sales[customer_id]),
+        CALCULATE(COUNTROWS(sales)) > 1
+    )
+)
+
+Repeat Customer Rate % = 
+DIVIDE([Repeat Customer Count], [Active Purchasing Customers], 0)
+
+Champions Revenue = 
+CALCULATE(
+    [Total Net Revenue],
+    customers[customer_segment] = "Champions"
+)
+
+At Risk Revenue Exposure = 
+CALCULATE(
+    [Total Net Revenue],
+    customers[customer_segment] = "At Risk"
+)
+
+// -----------------------------------------------------------------------------
+// SECTION 4: INVENTORY VELOCITY & STOCKOUT METRICS
+// -----------------------------------------------------------------------------
+
+Total Current Stock Units = 
+SUM(inventory[current_stock])
+
+Total Inventory Valuation = 
+SUMX(
+    inventory,
+    inventory[current_stock] * RELATED(products[cost_price])
+)
+
+Daily Sales Velocity 30D = 
+DIVIDE(
+    CALCULATE([Total Units Sold], DATESINPERIOD('Dim_Date'[Date], LASTDATE('Dim_Date'[Date]), -30, DAY)),
+    30,
+    0
+)
+
+Estimated Days of Inventory = 
+DIVIDE([Total Current Stock Units], [Daily Sales Velocity 30D], 999)
+
+Annualized Inventory Turnover = 
+DIVIDE([Total Cost of Goods Sold], [Total Inventory Valuation], 0)
+
+High Stockout Risk Products Count = 
+CALCULATE(
+    DISTINCTCOUNT(inventory[product_id]),
+    FILTER(
+        inventory,
+        inventory[current_stock] <= inventory[safety_stock] ||
+        DIVIDE(inventory[current_stock], [Daily Sales Velocity 30D], 0) <= 7
+    )
+)
+
+// -----------------------------------------------------------------------------
+// SECTION 5: RETURNS & REFUND ANALYSIS
+// -----------------------------------------------------------------------------
+
+Total Returns Count = 
+COUNTROWS(returns)
+
+Total Refunded Amount = 
+SUM(returns[refund_amount])
+
+Return Rate % = 
+DIVIDE([Total Returns Count], [Total Orders], 0)
+
+Net Revenue After Refunds = 
+[Total Net Revenue] - [Total Refunded Amount]
