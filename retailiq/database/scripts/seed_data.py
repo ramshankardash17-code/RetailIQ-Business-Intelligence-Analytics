@@ -315,8 +315,8 @@ def generate_dataset(is_demo: bool = False):
 
     return df_stores, df_products, df_promotions, df_customers, df_inventory, df_sales, df_returns
 
-def populate_postgres(df_stores, df_products, df_promotions, df_customers, df_inventory, df_sales, df_returns):
-    url = settings.database_url
+def populate_postgres(df_stores, df_products, df_promotions, df_customers, df_inventory, df_sales, df_returns, db_url: str = None):
+    url = db_url or settings.database_url
     print(f"\n>>> Connecting to PostgreSQL to seed data: {url.split('@')[-1] if '@' in url else url}...")
     engine = create_engine(url, echo=False)
 
@@ -378,6 +378,10 @@ def populate_postgres(df_stores, df_products, df_promotions, df_customers, df_in
     print(f" Returns:    {ret_cnt:,}")
     print("=======================================================\n")
 
+def seed_database(is_demo: bool = True, db_url: str = None):
+    stores, prods, promos, custs, inv, sales, rets = generate_dataset(is_demo=is_demo)
+    populate_postgres(stores, prods, promos, custs, inv, sales, rets, db_url=db_url)
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Seed RetailIQ PostgreSQL Database")
     parser.add_argument("--full", action="store_true", help="Generate full 257k+ records universe (takes longer)")
@@ -385,5 +389,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     is_demo = not args.full # Default to demo for safe, fast cloud deployments
-    stores, prods, promos, custs, inv, sales, rets = generate_dataset(is_demo=is_demo)
-    populate_postgres(stores, prods, promos, custs, inv, sales, rets)
+    seed_database(is_demo=is_demo)

@@ -32,6 +32,33 @@ app.add_middleware(
 # Include API Router under /api
 app.include_router(api_router, prefix="/api")
 
+@app.on_event("startup")
+def on_startup():
+    """
+    On container startup, verifies PostgreSQL connectivity and auto-initializes
+    tables, indexes, views, and initial demo data if the database is newly provisioned.
+    """
+    try:
+        from sqlalchemy import inspect
+        from retailiq.backend.app.db.session import engine
+        from retailiq.database.scripts.init_db import init_database
+
+        inspector = inspect(engine)
+        if not inspector.has_table("sales"):
+            print(">>> [Startup] Fresh PostgreSQL database detected. Auto-creating tables, indexes, and views...")
+            init_database(settings.database_url)
+            print(">>> [Startup] Auto-populating initial demo data (~5,000 transactions)...")
+            try:
+                from retailiq.database.scripts.seed_data import seed_database
+                seed_database(is_demo=True, db_url=settings.database_url)
+                print(">>> [Startup] Initial demo data seeded successfully!")
+            except Exception as se:
+                print(f">>> [Startup] Demo seed notice: {se}")
+        else:
+            print(">>> [Startup] Database verified: 'sales' relation is ready.")
+    except Exception as e:
+        print(f">>> [Startup] Database startup verification notice: {e}")
+
 @app.get("/")
 @app.get("/health")
 @app.get("/api/health")
@@ -54,6 +81,26 @@ def health_check(db: Session = Depends(get_db)):
         },
         "documentation": "/docs"
     }
+
+@app.post("/api/setup/init-db")
+def trigger_init_db():
+    """Manual or remote trigger to initialize PostgreSQL schema and views."""
+    try:
+        from retailiq.database.scripts.init_db import init_database
+        init_database(settings.database_url)
+        return {"status": "success", "message": "PostgreSQL schema and analytical views initialized successfully."}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@app.post("/api/setup/seed-demo")
+def trigger_seed_demo():
+    """Manual or remote trigger to seed demo data into PostgreSQL."""
+    try:
+        from retailiq.database.scripts.seed_data import seed_database
+        seed_database(is_demo=True, db_url=settings.database_url)
+        return {"status": "success", "message": "Demo retail dataset seeded successfully (~5,000 transactions)."}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
 
 if __name__ == "__main__":
     import uvicorn
