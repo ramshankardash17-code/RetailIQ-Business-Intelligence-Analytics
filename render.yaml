@@ -48,8 +48,6 @@ services:
   - type: web
     name: retailiq-frontend
     runtime: static
-    plan: free
-    region: oregon
     rootDir: retailiq/frontend
     buildCommand: npm install && npm run build
     staticPublishPath: dist
