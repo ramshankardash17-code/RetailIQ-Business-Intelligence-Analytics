@@ -28,7 +28,7 @@ import {
   Cell,
   BarChart
 } from 'recharts';
-import api from '../services/api';
+import api, { SERVER_ROOT, setCustomBackendUrl } from '../services/api';
 
 const CATEGORY_COLORS = ['#0284C7', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899'];
 const REGION_COLORS = ['#38BDF8', '#34D399', '#FBBF24', '#A78BFA', '#F472B6'];
@@ -37,6 +37,8 @@ export default function ExecutiveDashboard({ filters, onNavigate }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [customUrl, setCustomUrl] = useState(SERVER_ROOT);
+  const [seeding, setSeeding] = useState(false);
 
   useEffect(() => {
     fetchDashboard();
@@ -72,14 +74,58 @@ export default function ExecutiveDashboard({ filters, onNavigate }) {
     );
   }
 
+  const handleSeedDemo = async () => {
+    try {
+      setSeeding(true);
+      await api.seedDemoData();
+      await fetchDashboard();
+    } catch (err) {
+      alert('Seeding status: ' + (err.response?.data?.message || err.message));
+    } finally {
+      setSeeding(false);
+    }
+  };
+
   if (error && !data) {
     return (
-      <div style={{ padding: '3rem', backgroundColor: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '0.75rem', color: '#F87171' }}>
-        <h3>Error Connecting to Backend</h3>
-        <p>{error}</p>
-        <button onClick={fetchDashboard} className="btn btn-primary" style={{ marginTop: '1rem' }}>
-          Retry Query
-        </button>
+      <div style={{ padding: '2.5rem', backgroundColor: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.25)', borderRadius: '0.75rem', color: '#F87171' }}>
+        <h3 style={{ fontSize: '1.25rem', fontWeight: 700, margin: '0 0 0.5rem 0' }}>Error Connecting to Backend</h3>
+        <p style={{ color: '#E2E8F0', fontSize: '0.9rem', marginBottom: '1.25rem' }}>{error}</p>
+        
+        <div style={{ padding: '1rem', backgroundColor: '#0F172A', borderRadius: '0.5rem', border: '1px solid #334155', marginBottom: '1.5rem', maxWidth: '650px' }}>
+          <div style={{ fontSize: '0.8rem', color: '#94A3B8', marginBottom: '0.5rem' }}>
+            Current Targeted Backend API: <strong style={{ color: '#38BDF8' }}>{SERVER_ROOT}</strong>
+          </div>
+          <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+            <input
+              type="text"
+              value={customUrl}
+              onChange={(e) => setCustomUrl(e.target.value)}
+              placeholder="e.g. https://retailiq-backend.onrender.com"
+              className="form-input"
+              style={{ flex: 1, fontSize: '0.85rem' }}
+            />
+            <button
+              onClick={() => setCustomBackendUrl(customUrl)}
+              className="btn btn-primary"
+              style={{ fontSize: '0.85rem', whiteSpace: 'nowrap' }}
+            >
+              Save & Reconnect
+            </button>
+          </div>
+          <div style={{ fontSize: '0.72rem', color: '#64748B', marginTop: '0.4rem' }}>
+            Note: On Render free tier, web services spin down after 15m of inactivity and can take ~30s on cold start.
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+          <button onClick={fetchDashboard} className="btn btn-secondary">
+            Retry Query
+          </button>
+          <button onClick={handleSeedDemo} className="btn btn-primary" disabled={seeding}>
+            {seeding ? 'Seeding Demo Data...' : '⚡ Seed Demo Data (~5,000 Rows)'}
+          </button>
+        </div>
       </div>
     );
   }

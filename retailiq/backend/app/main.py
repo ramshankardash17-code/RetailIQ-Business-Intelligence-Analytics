@@ -20,11 +20,11 @@ app = FastAPI(
     redoc_url="/redoc"
 )
 
-# Configure CORS for React frontend (supports FRONTEND_URL & local dev)
+# Configure CORS for React frontend (permits cloud static sites and local dev)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins_list,
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )

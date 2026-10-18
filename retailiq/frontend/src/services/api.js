@@ -1,17 +1,54 @@
 import axios from 'axios';
 
-// Support VITE_API_BASE_URL (standard) or VITE_API_URL (legacy), fallback to localhost:8000
-const RAW_URL = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || 'http://localhost:8000';
-// Normalize URL: strip trailing slash and optional /api suffix
-const SERVER_ROOT = RAW_URL.replace(/\/api\/?$/, '').replace(/\/+$/, '');
-const API_BASE_URL = `${SERVER_ROOT}/api`;
+export function getResolvedBackendRoot() {
+  // 1. User manual override stored in localStorage
+  if (typeof window !== 'undefined' && window.localStorage) {
+    const saved = localStorage.getItem('RETAILIQ_BACKEND_URL');
+    if (saved && saved.trim()) {
+      return saved.trim().replace(/\/api\/?$/, '').replace(/\/+$/, '');
+    }
+  }
+
+  // 2. Build-time environment variable
+  const envUrl = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL;
+  if (envUrl && envUrl.trim() && !envUrl.includes('localhost') && !envUrl.includes('127.0.0.1')) {
+    return envUrl.trim().replace(/\/api\/?$/, '').replace(/\/+$/, '');
+  }
+
+  // 3. Dynamic inference when running on Render (*.onrender.com)
+  if (typeof window !== 'undefined' && window.location) {
+    const hostname = window.location.hostname;
+    if (hostname.endsWith('.onrender.com')) {
+      // Translates retailiq-frontend.onrender.com -> retailiq-backend.onrender.com
+      const backendHost = hostname.replace('frontend', 'backend');
+      return `https://${backendHost}`;
+    }
+  }
+
+  // 4. Default for local development
+  return (envUrl || 'http://localhost:8000').replace(/\/api\/?$/, '').replace(/\/+$/, '');
+}
+
+export function setCustomBackendUrl(url) {
+  if (typeof window !== 'undefined' && window.localStorage) {
+    if (url && url.trim()) {
+      localStorage.setItem('RETAILIQ_BACKEND_URL', url.trim());
+    } else {
+      localStorage.removeItem('RETAILIQ_BACKEND_URL');
+    }
+    window.location.reload();
+  }
+}
+
+export const SERVER_ROOT = getResolvedBackendRoot();
+export const API_BASE_URL = `${SERVER_ROOT}/api`;
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 20000,
+  timeout: 30000,
 });
 
 export const api = {
@@ -50,6 +87,10 @@ export const api = {
 
   // Backend Health
   getSystemHealth: () => axios.get(`${SERVER_ROOT}/health`),
+
+  // Setup & Seeding
+  seedDemoData: () => axios.post(`${SERVER_ROOT}/api/setup/seed-demo`),
+  initDatabase: () => axios.post(`${SERVER_ROOT}/api/setup/init-db`),
 };
 
 export default api;
