@@ -1,8 +1,8 @@
 # RetailIQ — Database Schema & Data Dictionary
 
 Database: **`retailiq_db`**  
-Target DBMS: **MySQL 8.0+**  
-Character Set: `utf8mb4` | Collation: `utf8mb4_unicode_ci`
+Target DBMS: **PostgreSQL 14+ / 16+**  
+Encoding: `UTF8` | Dialect: PostgreSQL Relational Warehouse
 
 ---
 

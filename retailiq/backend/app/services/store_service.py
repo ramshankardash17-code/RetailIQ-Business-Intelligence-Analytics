@@ -15,11 +15,11 @@ class StoreService:
             SELECT 
                 st.region,
                 COUNT(DISTINCT st.store_id) AS store_count,
-                ROUND(SUM(s.net_revenue), 2) AS regional_revenue,
-                ROUND(SUM(s.profit), 2) AS regional_profit,
-                ROUND(SUM(s.profit) / NULLIF(SUM(s.net_revenue), 0) * 100, 2) AS margin_pct,
+                ROUND(SUM(s.net_revenue)::numeric, 2) AS regional_revenue,
+                ROUND(SUM(s.profit)::numeric, 2) AS regional_profit,
+                ROUND(((SUM(s.profit) / NULLIF(SUM(s.net_revenue), 0)) * 100)::numeric, 2) AS margin_pct,
                 COUNT(DISTINCT s.order_id) AS total_orders,
-                ROUND(SUM(s.net_revenue) / NULLIF(SUM(st.square_feet), 0), 2) AS rev_per_sqft
+                ROUND((SUM(s.net_revenue) / NULLIF(SUM(st.square_feet), 0))::numeric, 2) AS rev_per_sqft
             FROM stores st
             LEFT JOIN sales s ON st.store_id = s.store_id
             GROUP BY st.region
@@ -52,11 +52,11 @@ class StoreService:
                 st.region,
                 st.store_type,
                 st.square_feet,
-                ROUND(COALESCE(SUM(s.net_revenue), 0), 2) AS store_rev,
-                ROUND(COALESCE(SUM(s.profit), 0), 2) AS store_prof,
-                ROUND(COALESCE(SUM(s.profit), 0) / NULLIF(SUM(s.net_revenue), 0) * 100, 2) AS margin_pct,
+                ROUND(COALESCE(SUM(s.net_revenue), 0)::numeric, 2) AS store_rev,
+                ROUND(COALESCE(SUM(s.profit), 0)::numeric, 2) AS store_prof,
+                ROUND(((COALESCE(SUM(s.profit), 0) / NULLIF(SUM(s.net_revenue), 0)) * 100)::numeric, 2) AS margin_pct,
                 COUNT(DISTINCT s.order_id) AS orders_cnt,
-                ROUND(COALESCE(SUM(s.net_revenue), 0) / NULLIF(st.square_feet, 0), 2) AS rev_sqft,
+                ROUND((COALESCE(SUM(s.net_revenue), 0) / NULLIF(st.square_feet, 0))::numeric, 2) AS rev_sqft,
                 RANK() OVER (ORDER BY COALESCE(SUM(s.net_revenue), 0) DESC) AS overall_rank,
                 RANK() OVER (PARTITION BY st.region ORDER BY COALESCE(SUM(s.net_revenue), 0) DESC) AS regional_rank
             FROM stores st
@@ -92,7 +92,7 @@ class StoreService:
             SELECT 
                 st.region,
                 p.category,
-                ROUND(SUM(s.net_revenue), 2) AS cat_revenue
+                ROUND(SUM(s.net_revenue)::numeric, 2) AS cat_revenue
             FROM sales s
             JOIN stores st ON s.store_id = st.store_id
             JOIN products p ON s.product_id = p.product_id

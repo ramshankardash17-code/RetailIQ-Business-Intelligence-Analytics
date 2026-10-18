@@ -17,7 +17,7 @@ class ProductService:
             sql += " AND category = :category"
             params["category"] = category
         if search:
-            sql += " AND (product_name LIKE :search OR product_id LIKE :search)"
+            sql += " AND (product_name ILIKE :search OR product_id ILIKE :search)"
             params["search"] = f"%{search}%"
         sql += " ORDER BY category, product_name ASC"
 
@@ -51,7 +51,7 @@ class ProductService:
                 COALESCE(SUM(s.quantity), 0) AS units_sold,
                 COALESCE(AVG(s.discount_amount), 0) AS avg_discount,
                 COUNT(DISTINCT s.order_id) AS total_orders,
-                COUNT(DISTINCT CASE WHEN s.is_returned = 1 THEN s.order_id END) AS return_orders
+                COUNT(DISTINCT CASE WHEN s.is_returned IS TRUE THEN s.order_id END) AS return_orders
             FROM sales s
             WHERE s.product_id = :pid
         """
@@ -74,13 +74,13 @@ class ProductService:
         # Monthly sales trend
         trend_sql = """
             SELECT 
-                DATE_FORMAT(s.order_date, '%Y-%m') AS ym,
-                ROUND(SUM(s.net_revenue), 2) AS rev,
-                ROUND(SUM(s.profit), 2) AS prof,
+                TO_CHAR(s.order_date, 'YYYY-MM') AS ym,
+                ROUND(SUM(s.net_revenue)::numeric, 2) AS rev,
+                ROUND(SUM(s.profit)::numeric, 2) AS prof,
                 SUM(s.quantity) AS units
             FROM sales s
             WHERE s.product_id = :pid
-            GROUP BY DATE_FORMAT(s.order_date, '%Y-%m')
+            GROUP BY TO_CHAR(s.order_date, 'YYYY-MM')
             ORDER BY ym ASC
         """
         trend_rows = db.execute(text(trend_sql), {"pid": product_id}).fetchall()
@@ -93,7 +93,7 @@ class ProductService:
         reg_sql = """
             SELECT 
                 st.region,
-                ROUND(SUM(s.net_revenue), 2) AS rev,
+                ROUND(SUM(s.net_revenue)::numeric, 2) AS rev,
                 SUM(s.quantity) AS units
             FROM sales s
             JOIN stores st ON s.store_id = st.store_id
@@ -144,14 +144,16 @@ class ProductService:
             subcategory=p_row.subcategory,
             unit_price=float(p_row.unit_price),
             cost_price=float(p_row.cost_price),
+            target_margin_pct=float(p_row.target_margin_pct),
             total_revenue=tot_rev,
             total_profit=tot_prof,
             realized_margin_pct=margin_pct,
-            units_sold=units,
-            average_discount_pct=round(avg_disc, 2),
+            total_units_sold=units,
+            total_orders=tot_orders,
+            avg_discount_amount=avg_disc,
             return_rate_pct=return_rate_pct,
-            current_inventory=curr_inv,
-            monthly_sales_trend=monthly_trend,
+            current_total_stock=curr_inv,
+            monthly_trend=monthly_trend,
             regional_sales=regional_sales,
             store_performance=store_performance
         )

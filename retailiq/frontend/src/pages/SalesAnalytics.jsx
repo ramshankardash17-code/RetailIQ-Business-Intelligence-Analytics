@@ -56,7 +56,7 @@ export default function SalesAnalytics({ filters }) {
   };
 
   if (loading && !data) {
-    return <div style={{ padding: '3rem', textAlign: 'center', color: '#94A3B8' }}>Loading Sales Data from MySQL...</div>;
+    return <div style={{ padding: '3rem', textAlign: 'center', color: '#94A3B8' }}>Loading Sales Data...</div>;
   }
 
   const summary = data?.summary || {};

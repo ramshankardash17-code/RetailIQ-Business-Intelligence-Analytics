@@ -3,14 +3,15 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Python: 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue?logo=python)](https://python.org)
 [![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688?logo=fastapi)](https://fastapi.tiangolo.com)
-[![MySQL 8.0](https://img.shields.io/badge/Database-MySQL%208.0-4479A1?logo=mysql)](https://mysql.com)
+[![PostgreSQL 14+](https://img.shields.io/badge/Database-PostgreSQL%2014%2B-336791?logo=postgresql)](https://postgresql.org)
 [![React: 18+](https://img.shields.io/badge/Frontend-React%20%2B%20Vite-61DAFB?logo=react)](https://react.dev)
 [![Power BI](https://img.shields.io/badge/BI-Microsoft%20Power%20BI-F2C811?logo=powerbi)](https://powerbi.microsoft.com)
 [![Scikit-Learn](https://img.shields.io/badge/ML-Scikit--Learn%20%26%20XGBoost-F7931E?logo=scikitlearn)](https://scikit-learn.org)
+[![Render Ready](https://img.shields.io/badge/Deploy-Render%20Ready-46E3B7?logo=render)](https://render.com)
 
 **RetailIQ** is an end-to-end, enterprise-grade retail business intelligence and predictive analytics platform engineered for executive leadership, commercial directors, category managers, and supply chain analysts.
 
-The platform bridges the gap between transactional raw data and high-impact business decisions: combining multi-year financial modeling in **Microsoft Excel**, a normalized **MySQL 8.0** analytical warehouse, high-throughput **FastAPI** backend services, automated **Machine Learning pipelines (XGBoost & Scikit-Learn)**, an executive **React.js + Recharts** interface, and enterprise **Microsoft Power BI** reporting.
+The platform bridges the gap between transactional raw data and high-impact business decisions: combining multi-year financial modeling in **Microsoft Excel**, a normalized **PostgreSQL** analytical warehouse, high-throughput **FastAPI** backend services, automated **Machine Learning pipelines (XGBoost & Scikit-Learn)**, an executive **React.js + Recharts** interface, and enterprise **Microsoft Power BI** reporting.
 
 ---
 
@@ -19,7 +20,7 @@ The platform bridges the gap between transactional raw data and high-impact busi
 2. [End-to-End Architectural Data Flow](#2-end-to-end-architectural-data-flow)
 3. [Technology Stack](#3-technology-stack)
 4. [Repository Folder Structure](#4-repository-folder-structure)
-5. [Relational Database Schema & MySQL Warehouse](#5-relational-database-schema--mysql-warehouse)
+5. [Relational Database Schema & PostgreSQL Warehouse](#5-relational-database-schema--postgresql-warehouse)
 6. [Excel Financial & Business Analysis Model](#6-excel-financial--business-analysis-model)
 7. [Machine Learning Pipeline & Model Evaluation](#7-machine-learning-pipeline--model-evaluation)
 8. [Rule-Based Automated Business Insights](#8-rule-based-automated-business-insights)
@@ -29,7 +30,7 @@ The platform bridges the gap between transactional raw data and high-impact busi
 12. [Environment Variables & Configuration](#12-environment-variables--configuration)
 13. [Installation & Setup Guide (Run Locally)](#13-installation--setup-guide-run-locally)
 14. [Screenshots & Visual Preview](#14-screenshots--visual-preview)
-15. [Production Deployment Guide](#15-production-deployment-guide)
+15. [Deploying RetailIQ on Render](#15-deploying-retailiq-on-render)
 16. [Future Roadmap & License](#16-future-roadmap--license)
 
 ---
@@ -46,7 +47,7 @@ Omnichannel retail enterprises face complex operational challenges:
 1. Unified macro KPI scorecards (Revenue, Net Profit, Realized Margin, AOV, YoY Growth).
 2. Machine learning-driven 14–90 day demand forecasting and early warning stockout risk classification.
 3. RFM-driven customer lifetime value optimization with automated churn win-back directives.
-4. Seamless dataset uploads with ACID-compliant MySQL database ingestion and validation reporting.
+4. Seamless dataset uploads with ACID-compliant PostgreSQL database ingestion and validation reporting.
 
 ---
 
@@ -55,13 +56,13 @@ Omnichannel retail enterprises face complex operational challenges:
 ```mermaid
 flowchart LR
     A[Raw Data Extraction] --> B[Excel Business Analysis Model]
-    B --> C[(MySQL 8.0 Warehouse\n257,000+ Transactions)]
+    B --> C[(PostgreSQL Warehouse\n257,000+ Transactions)]
     C --> D[Advanced SQL Views & Analytics\nCTEs, Window Functions, LAG/LEAD]
     D --> E[Python ML Pipelines\nScikit-Learn & XGBoost]
     D --> F[FastAPI REST Engine\nHigh-Performance Services]
     E --> F
     F --> G[React.js Executive Web Platform\nRecharts + Tailwind Design Tokens]
-    D --> H[Microsoft Power BI Desktop\nDirectQuery / Star Schema]
+    D --> H[Microsoft Power BI Desktop\nPostgreSQL Connector / Star Schema]
 ```
 
 ---
@@ -72,10 +73,10 @@ flowchart LR
 | :--- | :--- | :--- |
 | **Frontend** | React 18, Vite, Recharts, Lucide Icons | Responsive corporate executive dashboards, interactive charts, and prediction centers. |
 | **Backend** | Python 3.10+, FastAPI, Uvicorn, Pydantic v2 | High-concurrency async REST API, validation, and ML inference serving. |
-| **Database** | MySQL 8.0+, SQLAlchemy 2.0, PyMySQL | Normalized relational schema, indexed foreign keys, analytical views, and CTE queries. |
+| **Database** | PostgreSQL 14+, SQLAlchemy 2.0, psycopg2-binary | Normalized relational schema, indexed foreign keys, analytical views, and CTE queries. |
 | **Machine Learning** | Scikit-Learn, XGBoost, Pandas, NumPy | Demand forecasting, stockout risk classification, and repeat purchase propensity modeling. |
 | **Business Analysis** | Microsoft Excel (`openpyxl`), PivotTables | Multi-tab financial workbook with SUMIFS, COUNTIFS, XLOOKUP, and IF/IFS models. |
-| **Business Intelligence** | Microsoft Power BI, DAX | DirectQuery star-schema reports, time intelligence, and operational drill-downs. |
+| **Business Intelligence** | Microsoft Power BI, DAX | DirectQuery / Import star-schema reports, time intelligence, and operational drill-downs. |
 
 ---
 
@@ -104,13 +105,14 @@ RetailIQ-Business-Intelligence-Analytics/
     │       ├── schemas/                           # Pydantic request/response validation schemas
     │       └── services/                          # Business logic, ML inference & insight generator
     │
-    ├── database/                                  # MySQL DDL, Views & Database Seeder
+    ├── database/                                  # PostgreSQL DDL, Views & Database Seeder
     │   ├── scripts/
     │   │   ├── 01_schema.sql                      # Relational schema DDL (7 tables, PK/FK/Indexes)
     │   │   ├── 03_advanced_analytics_queries.sql  # CTEs, Window Functions, LAG/LEAD queries
-    │   │   └── seed_data.py                       # High-fidelity generator (257k+ transactions)
+    │   │   ├── init_db.py                         # Standalone PostgreSQL schema & view initializer
+    │   │   └── seed_data.py                       # High-fidelity generator (supports --demo & --full)
     │   └── views/
-    │       └── 02_views.sql                       # 6 specialized pre-materialized analytical views
+    │       └── 02_views.sql                       # 6 specialized analytical views
     │
     ├── docs/                                      # Enterprise architecture & reference documentation
     │   ├── ARCHITECTURE.md                        # Detailed architecture & component data flow
@@ -129,7 +131,7 @@ RetailIQ-Business-Intelligence-Analytics/
     │       ├── App.jsx                            # Root component & module navigation
     │       ├── components/                        # Header, Sidebar, InsightsModal
     │       ├── pages/                             # 9 executive dashboard views
-    │       └── services/                          # Axios API client
+    │       └── services/                          # Axios API client (centralized baseURL)
     │
     ├── ml/                                        # Machine Learning Pipeline & Serialized Models
     │   ├── saved_models/                          # Pre-trained, serialized production ML models
@@ -150,7 +152,7 @@ RetailIQ-Business-Intelligence-Analytics/
 
 ---
 
-## 5. Relational Database Schema & MySQL Warehouse
+## 5. Relational Database Schema & PostgreSQL Warehouse
 
 The central relational database **`retailiq_db`** contains over **257,000+ sales transactions** spanning 3 fiscal years (FY23–FY25), 2,500 customers, 61 products, 20 retail stores, and 1,220 store-inventory pairs.
 
@@ -338,7 +340,8 @@ FastAPI provides interactive Swagger documentation at **`http://127.0.0.1:8000/d
 
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
-| `GET` | `/` | Health check, MySQL connectivity status, indexed transaction count. |
+| `GET` | `/` | Health check, PostgreSQL connectivity status, indexed transaction count. |
+| `GET` | `/health` | Lightweight service health probe for Render / load balancers. |
 | `GET` | `/api/dashboard/kpis` | Executive KPI cards, monthly trends, category shares, top products & stores. |
 | `GET` | `/api/sales` | Detailed sales analytics, MoM/YoY growth, discount tiers, payment methods. |
 | `GET` | `/api/products` | Searchable product catalog list with price, cost, and target margin. |
@@ -350,7 +353,7 @@ FastAPI provides interactive Swagger documentation at **`http://127.0.0.1:8000/d
 | `POST`| `/api/predict/demand` | ML demand forecast for SKU-store pair across 14–90 days. |
 | `POST`| `/api/predict/stockout` | Random Forest stockout risk classification (LOW/MEDIUM/HIGH). |
 | `POST`| `/api/predict/repeat-purchase` | Logistic Regression repeat purchase propensity score & churn risk. |
-| `POST`| `/api/upload` | Ingest new CSV/XLSX retail batches into MySQL with validation summary. |
+| `POST`| `/api/upload` | Ingest new CSV/XLSX retail batches into PostgreSQL with validation summary. |
 | `GET` | `/api/insights/rule-based` | Automated rule-based operational insights. |
 
 ---
@@ -359,21 +362,29 @@ FastAPI provides interactive Swagger documentation at **`http://127.0.0.1:8000/d
 
 Configuration is managed via `.env` files (loaded automatically via Pydantic `BaseSettings` and `python-dotenv`). Never commit `.env` to GitHub.
 
+### Backend Environment Variables
+
 | Variable | Default Value | Description |
 | :--- | :--- | :--- |
-| `DB_HOST` | `127.0.0.1` | MySQL server host address |
-| `DB_PORT` | `3306` | MySQL server listening port |
-| `DB_USER` | `root` | Database username |
-| `DB_PASSWORD` | `your_mysql_password_here` | Database user password |
-| `DB_NAME` | `retailiq_db` | Relational analytics warehouse database name |
-| `API_HOST` | `127.0.0.1` | FastAPI local bind address |
-| `API_PORT` | `8000` | FastAPI server listening port |
-| `API_TITLE` | `RetailIQ Analytics Engine` | OpenAPI documentation title |
-| `API_VERSION` | `1.0.0` | Application release version |
-| `DEBUG` | `True` | Debug mode toggle |
-| `ML_MODELS_DIR`| `retailiq/ml/saved_models` | Directory path containing trained `.pkl` models |
-| `DATA_DIR` | `retailiq/data/raw` | Staging directory for generated synthetic CSV files |
-| `CORS_ORIGINS` | `http://localhost:5173,http://127.0.0.1:5173` | Allowed frontend origins for CORS |
+| `DATABASE_URL` | `postgresql://postgres:postgres@localhost:5432/retailiq_db` | Standard PostgreSQL connection URI (Render sets this automatically). |
+| `FRONTEND_URL` | `http://localhost:5173` | Production React Static Site origin permitted by CORS. |
+| `CORS_ORIGINS` | `http://localhost:5173,http://localhost:3000` | Comma-separated fallback allowed origins for CORS. |
+| `ENVIRONMENT` | `production` | Deployment environment (`production` or `development`). |
+| `DB_HOST` | `127.0.0.1` | PostgreSQL server host address (fallback if `DATABASE_URL` is omitted). |
+| `DB_PORT` | `5432` | PostgreSQL server listening port. |
+| `DB_USER` | `postgres` | Database username. |
+| `DB_PASSWORD` | `your_postgresql_password` | Database user password. |
+| `DB_NAME` | `retailiq_db` | Relational analytics warehouse database name. |
+| `API_HOST` | `0.0.0.0` | FastAPI bind address (`0.0.0.0` required for cloud containers). |
+| `API_PORT` | `8000` | FastAPI server listening port (Render automatically injects `$PORT`). |
+| `DEBUG` | `False` | Debug mode toggle. |
+| `ML_MODELS_DIR`| `retailiq/ml/saved_models` | Directory path containing trained `.pkl` inference models. |
+
+### Frontend Environment Variables
+
+| Variable | Default Value | Description |
+| :--- | :--- | :--- |
+| `VITE_API_BASE_URL` | `http://localhost:8000` | Base URL of the deployed FastAPI backend on Render. |
 
 ---
 
@@ -382,7 +393,7 @@ Configuration is managed via `.env` files (loaded automatically via Pydantic `Ba
 ### Prerequisites
 - **Python 3.10+** (Tested on Python 3.10–3.14)
 - **Node.js 18+** & **npm**
-- **MySQL 8.0+** running locally on port `3306`
+- **PostgreSQL 14+** running locally on port `5432` (or a remote PostgreSQL instance)
 - **Git**
 
 ---
@@ -393,57 +404,37 @@ git clone https://github.com/ramshankardash17-code/RetailIQ-Business-Intelligenc
 cd RetailIQ-Business-Intelligence-Analytics
 cp .env.example .env
 ```
-Edit `.env` and specify your local MySQL password:
+Edit `.env` and specify your PostgreSQL credentials:
 ```env
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_USER=root
-DB_PASSWORD=your_actual_mysql_password
-DB_NAME=retailiq_db
+DATABASE_URL=postgresql://postgres:your_password@localhost:5432/retailiq_db
 ```
 
 ---
 
-### Step 2: Install Python Dependencies & Seed MySQL Database
+### Step 2: Install Python Dependencies & Initialize Database
 ```bash
 pip install -r requirements.txt
-python retailiq/database/scripts/seed_data.py
-```
-*What this does:*
-1. Creates `retailiq_db` schema (7 normalized tables, indexes, constraints).
-2. Generates and inserts 257,000+ realistic retail sales transactions spanning FY23–FY25.
-3. Creates all 6 analytical SQL views (`vw_monthly_sales`, `vw_customer_rfm`, `vw_inventory_risk`, etc.).
-4. Outputs raw CSV backups to `retailiq/data/raw/`.
 
----
+# 1. Initialize PostgreSQL schema and 6 analytical views
+python retailiq/database/scripts/init_db.py
 
-### Step 3: Verify Pre-trained Machine Learning Models (Optional Retrain)
-The production-ready models are pre-packaged in `retailiq/ml/saved_models/`. To retrain them from scratch:
-```bash
-python retailiq/ml/scripts/train_all_models.py
+# 2. Seed database (use --demo for fast ~5k row seed, or --full for 257k rows)
+python retailiq/database/scripts/seed_data.py --demo
 ```
 
 ---
 
-### Step 4: Generate Excel Financial Workbook (Optional)
-The workbook is included in the repo. To re-generate it using openpyxl:
+### Step 3: Start the FastAPI Backend Server
 ```bash
-python retailiq/excel/generate_excel_workbook.py
+uvicorn retailiq.backend.app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
-
----
-
-### Step 5: Start the FastAPI Backend Server
-```bash
-python -m uvicorn retailiq.backend.app.main:app --host 127.0.0.1 --port 8000 --reload
-```
-- API will be accessible at: **`http://127.0.0.1:8000`**
+- API accessible at: **`http://127.0.0.1:8000`**
 - Interactive Swagger UI: **`http://127.0.0.1:8000/docs`**
-- Health Probe: **`http://127.0.0.1:8000/api/health`**
+- Health Probe: **`http://127.0.0.1:8000/health`**
 
 ---
 
-### Step 6: Start the React Frontend Server
+### Step 4: Start the React Frontend Server
 In a new terminal window:
 ```bash
 cd retailiq/frontend
@@ -451,7 +442,6 @@ npm install
 npm run dev
 ```
 - Open browser at: **`http://127.0.0.1:5173`**
-- Interact with executive dashboards, sales trajectories, customer segments, and live ML simulators!
 
 ---
 
@@ -476,14 +466,121 @@ npm run dev
 
 ---
 
-## 15. Production Deployment Guide
+## 15. Deploying RetailIQ on Render
 
-| Component | Target Platform | Instructions |
-| :--- | :--- | :--- |
-| **Frontend** | Vercel / Netlify / AWS S3 + CloudFront | `cd retailiq/frontend && npm run build` -> Output folder: `dist/`. Set `VITE_API_BASE_URL` to backend domain. |
-| **Backend API** | Render / Railway / AWS ECS / EC2 | Deploy with Docker or Python 3.11 container: `uvicorn retailiq.backend.app.main:app --host 0.0.0.0 --port $PORT`. Configure environment variables. |
-| **Database** | AWS RDS MySQL 8.0 / DigitalOcean MySQL | Run `retailiq/database/scripts/01_schema.sql` and `02_views.sql`. Run `seed_data.py` with RDS credentials. |
-| **Power BI** | Microsoft Power BI Service | Publish `.pbix` report to Power BI Workspace and configure scheduled refresh via On-Premises Data Gateway. |
+RetailIQ is fully pre-configured for frictionless deployment to [Render](https://render.com) using Infrastructure-as-Code (`render.yaml`) or manual service creation.
+
+```
+GitHub Repository
+        │
+        ├──► Render Managed PostgreSQL (retailiq-db)
+        │
+        ├──► Render Web Service (retailiq-backend)  ──► uvicorn on $PORT
+        │             ▲
+        │             │ REST API (HTTPS)
+        │             ▼
+        └──► Render Static Site (retailiq-frontend) ──► Vite React Single Page App
+```
+
+---
+
+### Option A: One-Click Blueprint Deployment (Recommended)
+
+1. Fork or push this repository to your GitHub account.
+2. In the [Render Dashboard](https://dashboard.render.com), click **New +** and select **Blueprint**.
+3. Select your repository `RetailIQ-Business-Intelligence-Analytics`.
+4. Render will parse `render.yaml` and provision:
+   - **`retailiq-db`**: Managed PostgreSQL Database
+   - **`retailiq-backend`**: FastAPI Python Web Service
+   - **`retailiq-frontend`**: React Vite Static Site
+5. Once provisioned, note the URLs assigned to your services.
+6. Set the two inter-service environment variables:
+   - In **`retailiq-frontend`** Environment: set `VITE_API_BASE_URL` to `https://retailiq-backend.onrender.com`
+   - In **`retailiq-backend`** Environment: set `FRONTEND_URL` to `https://retailiq-frontend.onrender.com`
+7. Seed the database (see Database Initialization below).
+
+---
+
+### Option B: Manual Step-by-Step Deployment
+
+#### 1. PostgreSQL Database
+1. In Render, click **New +** ➔ **PostgreSQL**.
+2. Set:
+   - **Name:** `retailiq-db`
+   - **Database:** `retailiq_db`
+   - **User:** `retailiq_user`
+   - **Region:** Oregon (or closest region)
+   - **Plan:** Free or Starter
+3. Click **Create Database**.
+4. Once created, copy the **Internal Database URL** (for the backend) and **External Database URL** (for remote seeding from your workstation).
+
+#### 2. Backend Web Service (FastAPI)
+1. Click **New +** ➔ **Web Service**.
+2. Connect your GitHub repository.
+3. Configure the service:
+   - **Name:** `retailiq-backend`
+   - **Region:** Oregon (same as database)
+   - **Branch:** `main`
+   - **Root Directory:** *(leave blank / repository root)*
+   - **Runtime:** `Python 3`
+   - **Build Command:** `pip install -r requirements.txt`
+   - **Start Command:** `uvicorn retailiq.backend.app.main:app --host 0.0.0.0 --port $PORT`
+   - **Health Check Path:** `/health`
+4. Add **Environment Variables**:
+   - `DATABASE_URL`: Paste your Render PostgreSQL **Internal Database URL**
+   - `ENVIRONMENT`: `production`
+   - `API_HOST`: `0.0.0.0`
+   - `FRONTEND_URL`: `https://retailiq-frontend.onrender.com` *(update after creating frontend)*
+5. Click **Create Web Service**.
+
+#### 3. Frontend Static Site (React + Vite)
+1. Click **New +** ➔ **Static Site**.
+2. Connect your GitHub repository.
+3. Configure the static site:
+   - **Name:** `retailiq-frontend`
+   - **Branch:** `main`
+   - **Root Directory:** `retailiq/frontend`
+   - **Build Command:** `npm install && npm run build`
+   - **Publish Directory:** `dist`
+4. Add **Environment Variable**:
+   - `VITE_API_BASE_URL`: `https://retailiq-backend.onrender.com` *(your backend Render URL)*
+5. **SPA Routing:** RetailIQ includes `public/_redirects` with `/* /index.html 200`, ensuring client-side navigation (`/dashboard`, `/sales`, `/inventory`, etc.) reloads seamlessly without 404 errors.
+6. Click **Create Static Site**.
+
+---
+
+### Step 4: PostgreSQL Initialization & Demo Seeding
+
+Once your Render PostgreSQL database is running, initialize the tables and populate the data from your local machine using the **External Database URL**:
+
+```bash
+# Set your Render External Database URL in terminal:
+# (Replace with your actual Render external database URL from dashboard)
+export DATABASE_URL="postgresql://retailiq_user:PASSWORD@dpg-xxxxx.oregon-postgres.render.com/retailiq_db"
+
+# 1. Create tables, relationships, indexes, and views:
+python retailiq/database/scripts/init_db.py
+
+# 2. Seed data:
+# For cloud instances (fast ~5,000 transaction seed):
+python retailiq/database/scripts/seed_data.py --demo
+
+# Or for the complete multi-year 257,000+ transaction dataset:
+python retailiq/database/scripts/seed_data.py --full
+```
+
+---
+
+### Step 5: Connecting Power BI to Render PostgreSQL
+
+1. Open **Power BI Desktop**.
+2. Click **Get Data** ➔ **PostgreSQL database**.
+3. In the Server field, paste your Render PostgreSQL **External Host**:
+   - Server: `dpg-xxxxx.oregon-postgres.render.com:5432`
+   - Database: `retailiq_db`
+4. Enter your database user and password.
+5. Ingest the analytical views (`vw_monthly_sales`, `vw_inventory_risk`, `vw_customer_rfm`) or core star schema tables.
+6. Reference `retailiq/powerbi/PowerBI_Setup_Guide.md` for complete DAX measures and visualization layout.
 
 ---
 

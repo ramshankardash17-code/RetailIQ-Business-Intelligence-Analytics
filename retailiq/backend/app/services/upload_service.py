@@ -1,6 +1,6 @@
-import io
+import os
+import datetime
 import pandas as pd
-import numpy as np
 from typing import Dict, Any, List
 from fastapi import UploadFile, HTTPException
 from sqlalchemy.orm import Session
@@ -10,43 +10,46 @@ from retailiq.backend.app.schemas.predict import UploadSummaryResponse
 class UploadService:
     REQUIRED_COLUMNS = {
         "sales": ["order_id", "product_id", "order_date", "customer_id", "store_id", "quantity", "unit_price"],
-        "products": ["product_id", "product_name", "category", "subcategory", "cost_price", "unit_price"],
-        "customers": ["customer_id", "first_name", "last_name", "email", "city", "region"],
-        "stores": ["store_id", "store_name", "city", "state", "region", "store_type"]
+        "inventory": ["product_id", "store_id", "current_stock", "safety_stock", "reorder_level"],
+        "customers": ["customer_id", "first_name", "last_name", "email", "region", "signup_date"],
+        "products": ["product_id", "product_name", "category", "unit_price", "cost_price"]
     }
 
     @classmethod
-    async def process_file_upload(cls, db: Session, file: UploadFile, dataset_type: str = "sales") -> UploadSummaryResponse:
+    async def process_dataset_upload(
+        cls,
+        db: Session,
+        file: UploadFile,
+        dataset_type: str = "sales"
+    ) -> UploadSummaryResponse:
+        
         filename = file.filename
+        ext = os.path.splitext(filename)[1].lower()
+
+        if ext not in [".csv", ".xlsx", ".xls"]:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Unsupported file format '{ext}'. Please upload a .csv, .xlsx, or .xls file."
+            )
+
         content = await file.read()
-
-        if not filename.endswith((".csv", ".xlsx", ".xls")):
-            raise HTTPException(status_code=400, detail="Unsupported file format. Please upload a .csv or .xlsx file.")
-
-        # Read into pandas
         try:
-            if filename.endswith(".csv"):
+            if ext == ".csv":
+                import io
                 df = pd.read_csv(io.BytesIO(content))
             else:
+                import io
                 df = pd.read_excel(io.BytesIO(content))
         except Exception as e:
-            raise HTTPException(status_code=400, detail=f"Failed to parse uploaded spreadsheet: {str(e)}")
+            raise HTTPException(
+                status_code=400,
+                detail=f"Unable to parse spreadsheet file: {str(e)}"
+            )
 
         total_rows = len(df)
         if total_rows == 0:
-            return UploadSummaryResponse(
-                filename=filename,
-                dataset_type=dataset_type,
-                total_rows_received=0,
-                valid_rows_parsed=0,
-                invalid_rows_skipped=0,
-                duplicate_rows_ignored=0,
-                records_inserted_to_mysql=0,
-                validation_status="Empty File",
-                sample_errors=["The uploaded file contained zero data rows."]
-            )
+            raise HTTPException(status_code=400, detail="The uploaded file contains zero records.")
 
-        # Validate required columns
         req_cols = cls.REQUIRED_COLUMNS.get(dataset_type, cls.REQUIRED_COLUMNS["sales"])
         missing_cols = [c for c in req_cols if c not in df.columns]
         if missing_cols:
@@ -95,7 +98,7 @@ class UploadService:
 
                     valid_rows.append((
                         oid, pid, dt_val, f"{dt_val} 12:00:00", cid, sid, promo,
-                        qty, price, cost, disc, gross, net, prof, pay_method, 0
+                        qty, price, cost, disc, gross, net, prof, pay_method, False
                     ))
                     existing_pairs.add((oid, pid))
 
@@ -104,11 +107,11 @@ class UploadService:
                     if len(sample_errors) < 5:
                         sample_errors.append(f"Row {idx+1}: Parse error {str(err)}")
 
-            # Batch insert valid rows safely
+            # Batch insert valid rows safely using PostgreSQL ON CONFLICT DO NOTHING
             inserted_count = 0
             if valid_rows:
                 insert_sql = """
-                    INSERT IGNORE INTO sales (
+                    INSERT INTO sales (
                         order_id, product_id, order_date, order_timestamp, customer_id, store_id,
                         promo_id, quantity, unit_price, cost_price, discount_amount, gross_revenue,
                         net_revenue, profit, payment_method, is_returned
@@ -116,6 +119,7 @@ class UploadService:
                         :oid, :pid, :odate, :ots, :cid, :sid, :promo, :qty, :uprice,
                         :cprice, :disc, :gross, :net, :prof, :pay, :ret
                     )
+                    ON CONFLICT (order_id, product_id) DO NOTHING
                 """
                 # Execute in batches of 500
                 batch_size = 500
@@ -147,6 +151,7 @@ class UploadService:
             invalid_rows_skipped=invalid_count,
             duplicate_rows_ignored=duplicate_count,
             records_inserted_to_mysql=inserted_count,
+            records_inserted=inserted_count,
             validation_status="SUCCESS" if invalid_count == 0 else "PARTIAL_SUCCESS",
             sample_errors=sample_errors
         )

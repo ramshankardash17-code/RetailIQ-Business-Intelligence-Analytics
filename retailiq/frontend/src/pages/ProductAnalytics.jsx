@@ -140,7 +140,7 @@ export default function ProductAnalytics({ onNavigateToPrediction }) {
       </div>
 
       {loading && !productData ? (
-        <div style={{ padding: '3rem', textAlign: 'center', color: '#94A3B8' }}>Loading product metrics from MySQL...</div>
+        <div style={{ padding: '3rem', textAlign: 'center', color: '#94A3B8' }}>Loading product metrics...</div>
       ) : productData ? (
         <div>
           {/* Header Card for Selected Product */}

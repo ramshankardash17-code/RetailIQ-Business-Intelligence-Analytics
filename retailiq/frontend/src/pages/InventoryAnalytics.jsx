@@ -37,7 +37,7 @@ export default function InventoryAnalytics({ filters, onNavigateToPrediction }) 
   };
 
   if (loading && !data) {
-    return <div style={{ padding: '3rem', textAlign: 'center', color: '#94A3B8' }}>Loading Supply Chain Inventory from MySQL...</div>;
+    return <div style={{ padding: '3rem', textAlign: 'center', color: '#94A3B8' }}>Loading Supply Chain Inventory...</div>;
   }
 
   const health = data?.health_summary || {};

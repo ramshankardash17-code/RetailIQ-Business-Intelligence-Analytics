@@ -121,7 +121,7 @@ class InventoryService:
                 p.product_id,
                 p.product_name,
                 p.category,
-                ROUND(SUM(s.quantity) / 90.0, 2) AS daily_velocity,
+                ROUND((SUM(s.quantity)::numeric / 90.0), 2) AS daily_velocity,
                 COALESCE(inv.stock, 0) AS current_stock
             FROM products p
             JOIN sales s ON p.product_id = s.product_id AND s.order_date >= '2025-10-01'
@@ -147,7 +147,7 @@ class InventoryService:
                 p.product_id,
                 p.product_name,
                 p.category,
-                ROUND(COALESCE(SUM(s.quantity), 0) / 90.0, 2) AS daily_velocity,
+                ROUND((COALESCE(SUM(s.quantity), 0)::numeric / 90.0), 2) AS daily_velocity,
                 COALESCE(inv.stock, 0) AS current_stock
             FROM products p
             LEFT JOIN sales s ON p.product_id = s.product_id AND s.order_date >= '2025-10-01'

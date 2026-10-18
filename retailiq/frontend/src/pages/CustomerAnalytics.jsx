@@ -56,7 +56,7 @@ export default function CustomerAnalytics() {
   };
 
   if (loading && !data) {
-    return <div style={{ padding: '3rem', textAlign: 'center', color: '#94A3B8' }}>Loading Customer Intelligence from MySQL...</div>;
+    return <div style={{ padding: '3rem', textAlign: 'center', color: '#94A3B8' }}>Loading Customer Intelligence...</div>;
   }
 
   const summary = data?.summary || {};

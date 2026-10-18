@@ -9,7 +9,7 @@ RetailIQ is an enterprise-grade retail business intelligence and predictive anal
 ```mermaid
 flowchart TD
     subgraph Data Layer
-        A[(MySQL 8.0 Analytical Warehouse)]
+        A[(PostgreSQL Analytical Warehouse)]
         A1[Transactions: 257,000+]
         A2[Dimensions: Stores, Products, Customers, Promos]
         A3[Analytical Views: Daily/Monthly Sales, RFM, Inventory Risk]
@@ -48,7 +48,7 @@ flowchart TD
 
 ## 2. Component Breakdown
 
-### 2.1 Analytical Data Warehouse (MySQL 8.0)
+### 2.1 Analytical Data Warehouse (PostgreSQL)
 - **Primary Schema:** 7 relational tables (`stores`, `products`, `customers`, `promotions`, `sales`, `inventory`, `returns`) with foreign key constraints and B-Tree indexes.
 - **Analytical Views:** 6 pre-materialized SQL views providing real-time aggregation for KPIs, monthly trends, SKU velocity, RFM segmentation, and inventory stockout risk.
 

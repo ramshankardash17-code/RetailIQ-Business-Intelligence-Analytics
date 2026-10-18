@@ -97,7 +97,7 @@ export default function InsightsModal({ isOpen, onClose, insights = [] }) {
                 Rule-Based Automated Business Insights
               </h2>
               <p style={{ fontSize: '0.75rem', color: '#64748B', margin: '0.1rem 0 0 0' }}>
-                Deterministic mathematical computations derived from live MySQL sales, inventory, and RFM tables
+                Deterministic mathematical computations derived from live PostgreSQL sales, inventory, and RFM tables
               </p>
             </div>
           </div>

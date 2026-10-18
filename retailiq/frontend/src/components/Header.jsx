@@ -172,7 +172,7 @@ export default function Header({
             fontWeight: 600,
             cursor: 'pointer'
           }}
-          title="Refresh Data from MySQL"
+          title="Refresh Data from Database"
         >
           <RefreshCw size={14} className={loading ? 'spin' : ''} />
         </button>

@@ -295,15 +295,15 @@ class MLService:
                 c.signup_date,
                 COUNT(DISTINCT s.order_id) AS total_orders,
                 COALESCE(SUM(s.quantity), 0) AS total_units,
-                COALESCE(ROUND(SUM(s.net_revenue), 2), 0) AS monetary_value,
-                COALESCE(ROUND(AVG(s.net_revenue), 2), 0) AS avg_order_value,
+                COALESCE(ROUND(SUM(s.net_revenue)::numeric, 2), 0) AS monetary_value,
+                COALESCE(ROUND(AVG(s.net_revenue)::numeric, 2), 0) AS avg_order_value,
                 COALESCE(SUM(s.discount_amount), 0) AS total_discount,
-                COALESCE(SUM(s.is_returned), 0) AS return_count,
-                DATEDIFF('2025-12-31', MAX(s.order_date)) AS recency_days
+                COUNT(CASE WHEN s.is_returned IS TRUE THEN 1 END) AS return_count,
+                (DATE '2025-12-31' - MAX(s.order_date))::INT AS recency_days
             FROM customers c
             LEFT JOIN sales s ON c.customer_id = s.customer_id
             WHERE c.customer_id = :cid
-            GROUP BY c.customer_id, full_name, c.customer_segment, c.region, c.signup_date
+            GROUP BY c.customer_id, c.first_name, c.last_name, c.customer_segment, c.region, c.signup_date
         """
         r = db.execute(text(sql), {"cid": req.customer_id}).fetchone()
         if not r:

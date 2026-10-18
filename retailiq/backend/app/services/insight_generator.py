@@ -28,7 +28,7 @@ class InsightGenerator:
                 r25.region,
                 r25.rev_2025,
                 r24.rev_2024,
-                ROUND(((r25.rev_2025 - r24.rev_2024) / r24.rev_2024) * 100, 1) AS yoy_growth_pct
+                ROUND((((r25.rev_2025 - r24.rev_2024) / NULLIF(r24.rev_2024, 0)) * 100)::numeric, 1) AS yoy_growth_pct
             FROM Reg2025 r25
             JOIN Reg2024 r24 ON r25.region = r24.region
             ORDER BY yoy_growth_pct DESC
@@ -42,8 +42,8 @@ class InsightGenerator:
                     category="Regional Expansion",
                     severity="positive",
                     title=f"{top_growth_reg.region} Region Leading Enterprise Growth",
-                    message=f"{top_growth_reg.region} region revenue expanded by {top_growth_reg.yoy_growth_pct:+.1f}% YoY ($28.5M run-rate), outpacing corporate target benchmarks.",
-                    metric=f"{top_growth_reg.yoy_growth_pct:+.1f}% YoY",
+                    message=f"{top_growth_reg.region} region revenue expanded by {float(top_growth_reg.yoy_growth_pct):+.1f}% YoY ($28.5M run-rate), outpacing corporate target benchmarks.",
+                    metric=f"{float(top_growth_reg.yoy_growth_pct):+.1f}% YoY",
                     action_recommendation="Allocate additional regional marketing budget and assess new store locations in high-density corridors."
                 )
             )
@@ -54,9 +54,9 @@ class InsightGenerator:
         cat_sql = """
             SELECT 
                 p.category,
-                ROUND(SUM(s.net_revenue), 2) AS cat_revenue,
-                ROUND(SUM(s.profit), 2) AS cat_profit,
-                ROUND(SUM(s.profit) / NULLIF(SUM(s.net_revenue), 0) * 100, 2) AS cat_margin
+                ROUND(SUM(s.net_revenue)::numeric, 2) AS cat_revenue,
+                ROUND(SUM(s.profit)::numeric, 2) AS cat_profit,
+                ROUND(((SUM(s.profit) / NULLIF(SUM(s.net_revenue), 0)) * 100)::numeric, 2) AS cat_margin
             FROM sales s
             JOIN products p ON s.product_id = p.product_id
             WHERE s.order_date >= '2025-01-01'
@@ -66,7 +66,7 @@ class InsightGenerator:
         cat_rows = db.execute(text(cat_sql)).fetchall()
         if len(cat_rows) >= 2:
             top_vol_cat = cat_rows[0]
-            high_margin_cat = max(cat_rows, key=lambda x: x.cat_margin)
+            high_margin_cat = max(cat_rows, key=lambda x: float(x.cat_margin or 0))
             
             insights.append(
                 BusinessInsight(
@@ -74,8 +74,8 @@ class InsightGenerator:
                     category="Category Profitability",
                     severity="warning",
                     title="Volume vs Margin Trade-off",
-                    message=f"{top_vol_cat.category} generated the highest revenue (${float(top_vol_cat.cat_revenue):,.0f}) but has a lower profit margin ({top_vol_cat.cat_margin:.1f}%), whereas {high_margin_cat.category} delivers superior margins ({high_margin_cat.cat_margin:.1f}%).",
-                    metric=f"{top_vol_cat.cat_margin:.1f}% vs {high_margin_cat.cat_margin:.1f}%",
+                    message=f"{top_vol_cat.category} generated the highest revenue (${float(top_vol_cat.cat_revenue):,.0f}) but has a lower profit margin ({float(top_vol_cat.cat_margin):.1f}%), whereas {high_margin_cat.category} delivers superior margins ({float(high_margin_cat.cat_margin):.1f}%).",
+                    metric=f"{float(top_vol_cat.cat_margin):.1f}% vs {float(high_margin_cat.cat_margin):.1f}%",
                     action_recommendation=f"Bundle high-margin {high_margin_cat.category} items as add-ons with top-selling {top_vol_cat.category} transactions to lift composite basket margin."
                 )
             )
@@ -98,7 +98,7 @@ class InsightGenerator:
                     category="Supply Chain Risk",
                     severity="critical",
                     title="Imminent Stockout Threat Detected",
-                    message=f"Product {inv_row.product_name} ({inv_row.product_id}) at {inv_row.store_name} is at HIGH stockout risk with only {inv_row.current_stock} units remaining ({inv_row.estimated_days_of_inventory:.1f} days cover vs {inv_row.avg_daily_demand:.1f} units/day velocity).",
+                    message=f"Product {inv_row.product_name} ({inv_row.product_id}) at {inv_row.store_name} is at HIGH stockout risk with only {inv_row.current_stock} units remaining ({float(inv_row.estimated_days_of_inventory):.1f} days cover vs {float(inv_row.avg_daily_demand):.1f} units/day velocity).",
                     metric=f"{inv_row.current_stock} Units Left",
                     action_recommendation="Initiate emergency purchase order transfer from regional warehouse before sales loss occurs."
                 )
@@ -110,7 +110,7 @@ class InsightGenerator:
         cust_sql = """
             SELECT 
                 COUNT(*) AS at_risk_count,
-                ROUND(SUM(monetary_value), 2) AS at_risk_value
+                ROUND(SUM(monetary_value)::numeric, 2) AS at_risk_value
             FROM vw_customer_rfm
             WHERE rfm_segment = 'At Risk'
         """
@@ -133,8 +133,8 @@ class InsightGenerator:
         # ---------------------------------------------------------------------
         ret_sql = """
             SELECT 
-                ROUND(COUNT(DISTINCT r.return_id) / NULLIF(COUNT(DISTINCT s.order_id), 0) * 100, 2) AS ret_pct,
-                ROUND(SUM(r.refund_amount), 2) AS refund_total
+                ROUND(((COUNT(DISTINCT r.return_id)::numeric / NULLIF(COUNT(DISTINCT s.order_id), 0)) * 100)::numeric, 2) AS ret_pct,
+                ROUND(SUM(r.refund_amount)::numeric, 2) AS refund_total
             FROM sales s
             JOIN products p ON s.product_id = p.product_id
             JOIN returns r ON s.order_id = r.order_id AND s.product_id = r.product_id
@@ -148,8 +148,8 @@ class InsightGenerator:
                     category="Operational Efficiency",
                     severity="info",
                     title="Apparel Sizing Return Friction",
-                    message=f"Apparel return rate stands at {ret_row.ret_pct:.1f}% (totaling ${float(ret_row.refund_total):,.0f} in refund deductions), largely attributed to fit and sizing mismatches.",
-                    metric=f"{ret_row.ret_pct:.1f}% Return Rate",
+                    message=f"Apparel return rate stands at {float(ret_row.ret_pct):.1f}% (totaling ${float(ret_row.refund_total):,.0f} in refund deductions), largely attributed to fit and sizing mismatches.",
+                    metric=f"{float(ret_row.ret_pct):.1f}% Return Rate",
                     action_recommendation="Implement interactive size-recommendation guides on store displays and e-commerce portals to curtail avoidable returns."
                 )
             )

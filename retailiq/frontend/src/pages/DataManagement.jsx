@@ -65,7 +65,7 @@ export default function DataManagement() {
               Retail Data Ingestion & Batch Management
             </h2>
             <p style={{ fontSize: '0.825rem', color: '#94A3B8', margin: 0 }}>
-              Upload new CSV or XLSX batches directly into MySQL (<code>retailiq_db</code>) with automated column validation, duplicate screening, and type coercion.
+              Upload new CSV or XLSX batches directly into PostgreSQL (<code>retailiq_db</code>) with automated column validation, duplicate screening, and type coercion.
             </p>
           </div>
         </div>
@@ -158,7 +158,7 @@ export default function DataManagement() {
               {uploading ? (
                 <>
                   <RefreshCw size={16} className="spin" />
-                  Validating & Ingesting Records into MySQL...
+                  Validating & Ingesting Records into PostgreSQL...
                 </>
               ) : (
                 <>
@@ -224,9 +224,9 @@ export default function DataManagement() {
                 </div>
 
                 <div style={{ padding: '0.85rem', backgroundColor: '#0F172A', borderRadius: '0.5rem', border: '1px solid #334155' }}>
-                  <div style={{ fontSize: '0.7rem', color: '#94A3B8' }}>RECORDS INSERTED TO MYSQL</div>
+                  <div style={{ fontSize: '0.7rem', color: '#94A3B8' }}>RECORDS INSERTED TO DATABASE</div>
                   <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#10B981' }}>
-                    {summary.records_inserted_to_mysql?.toLocaleString()}
+                    {(summary.records_inserted ?? summary.records_inserted_to_mysql)?.toLocaleString()}
                   </div>
                 </div>
               </div>

@@ -81,7 +81,6 @@ class DashboardService:
         aov = round((tot_rev / tot_ord), 2) if tot_ord > 0 else 0.0
 
         # Prior Year / Prior Period Comparison
-        # For simplicity and speed, compute 2024 benchmark for YoY delta
         prev_kpi_sql = f"""
             SELECT 
                 COALESCE(SUM(s.net_revenue), 0) AS prev_revenue,
@@ -114,85 +113,77 @@ class DashboardService:
         aov_delta = round(((aov - prev_aov) / prev_aov * 100), 1) if prev_aov > 0 else 2.1
 
         kpis = DashboardSummaryResponse(
-            total_revenue=KPIMetric(
-                label="Total Revenue",
+            gross_revenue=KPIMetric(
+                label="Gross Revenue",
                 value=tot_rev,
                 formatted=f"${tot_rev:,.0f}",
-                previous_value=prev_rev,
-                delta_pct=rev_delta,
-                is_positive=rev_delta >= 0
+                prior_period_value=prev_rev,
+                change_pct=rev_delta,
+                trend="up" if rev_delta >= 0 else "down"
             ),
-            total_profit=KPIMetric(
+            net_profit=KPIMetric(
                 label="Net Profit",
                 value=tot_prof,
                 formatted=f"${tot_prof:,.0f}",
-                previous_value=prev_prof,
-                delta_pct=prof_delta,
-                is_positive=prof_delta >= 0
+                prior_period_value=prev_prof,
+                change_pct=prof_delta,
+                trend="up" if prof_delta >= 0 else "down"
             ),
-            profit_margin=KPIMetric(
-                label="Profit Margin",
+            profit_margin_pct=KPIMetric(
+                label="Operating Margin",
                 value=margin_pct,
                 formatted=f"{margin_pct:.1f}%",
-                previous_value=prev_margin,
-                delta_pct=margin_delta,
-                is_positive=margin_delta >= 0
+                prior_period_value=prev_margin,
+                change_pct=margin_delta,
+                trend="up" if margin_delta >= 0 else "down"
             ),
             total_orders=KPIMetric(
-                label="Total Orders",
+                label="Transaction Orders",
                 value=float(tot_ord),
                 formatted=f"{tot_ord:,}",
-                previous_value=float(prev_ord),
-                delta_pct=ord_delta,
-                is_positive=ord_delta >= 0
-            ),
-            unique_customers=KPIMetric(
-                label="Active Customers",
-                value=float(tot_cust),
-                formatted=f"{tot_cust:,}",
-                previous_value=float(prev_cust),
-                delta_pct=cust_delta,
-                is_positive=cust_delta >= 0
-            ),
-            units_sold=KPIMetric(
-                label="Units Sold",
-                value=float(tot_units),
-                formatted=f"{tot_units:,}",
-                previous_value=float(prev_units),
-                delta_pct=units_delta,
-                is_positive=units_delta >= 0
+                prior_period_value=float(prev_ord),
+                change_pct=ord_delta,
+                trend="up" if ord_delta >= 0 else "down"
             ),
             average_order_value=KPIMetric(
                 label="Average Order Value",
                 value=aov,
                 formatted=f"${aov:.2f}",
-                previous_value=prev_aov,
-                delta_pct=aov_delta,
-                is_positive=aov_delta >= 0
+                prior_period_value=prev_aov,
+                change_pct=aov_delta,
+                trend="up" if aov_delta >= 0 else "down"
             ),
-            yoy_growth=KPIMetric(
-                label="YoY Revenue Growth",
-                value=rev_delta,
-                formatted=f"{rev_delta:+.1f}%",
-                previous_value=0.0,
-                delta_pct=rev_delta,
-                is_positive=rev_delta >= 0
+            unique_customers=KPIMetric(
+                label="Active Customers",
+                value=float(tot_cust),
+                formatted=f"{tot_cust:,}",
+                prior_period_value=float(prev_cust),
+                change_pct=cust_delta,
+                trend="up" if cust_delta >= 0 else "down"
+            ),
+            total_units_sold=KPIMetric(
+                label="Merchandise Units Sold",
+                value=float(tot_units),
+                formatted=f"{tot_units:,}",
+                prior_period_value=float(prev_units),
+                change_pct=units_delta,
+                trend="up" if units_delta >= 0 else "down"
             )
         )
 
         # 2. Revenue & Profit Trends (Monthly)
         trend_sql = f"""
             SELECT 
-                DATE_FORMAT(s.order_date, '%Y-%m') AS ym,
-                ROUND(SUM(s.net_revenue), 2) AS monthly_rev,
-                ROUND(SUM(s.profit), 2) AS monthly_prof,
+                TO_CHAR(s.order_date, 'YYYY-MM') AS ym,
+                ROUND(SUM(s.net_revenue)::numeric, 2) AS monthly_rev,
+                ROUND(SUM(s.profit)::numeric, 2) AS monthly_prof,
                 COUNT(DISTINCT s.order_id) AS orders_cnt,
                 SUM(s.quantity) AS units_cnt
             FROM sales s
             JOIN stores st ON s.store_id = st.store_id
             JOIN products p ON s.product_id = p.product_id
             WHERE {where_clause}
-            GROUP BY DATE_FORMAT(s.order_date, '%Y-%m')
+            GROUP BY TO_CHAR(s.order_date, 'YYYY-MM')
             ORDER BY ym ASC
         """
         trend_rows = db.execute(text(trend_sql), params).fetchall()
@@ -212,8 +203,8 @@ class DashboardService:
         cat_sql = f"""
             SELECT 
                 p.category,
-                ROUND(SUM(s.net_revenue), 2) AS cat_rev,
-                ROUND(SUM(s.profit), 2) AS cat_prof,
+                ROUND(SUM(s.net_revenue)::numeric, 2) AS cat_rev,
+                ROUND(SUM(s.profit)::numeric, 2) AS cat_prof,
                 SUM(s.quantity) AS cat_units
             FROM sales s
             JOIN stores st ON s.store_id = st.store_id
@@ -239,8 +230,8 @@ class DashboardService:
         reg_sql = f"""
             SELECT 
                 st.region,
-                ROUND(SUM(s.net_revenue), 2) AS reg_rev,
-                ROUND(SUM(s.profit), 2) AS reg_prof,
+                ROUND(SUM(s.net_revenue)::numeric, 2) AS reg_rev,
+                ROUND(SUM(s.profit)::numeric, 2) AS reg_prof,
                 COUNT(DISTINCT s.order_id) AS reg_orders,
                 COUNT(DISTINCT st.store_id) AS store_cnt
             FROM sales s
@@ -269,8 +260,8 @@ class DashboardService:
                 p.product_id,
                 p.product_name,
                 p.category,
-                ROUND(SUM(s.net_revenue), 2) AS p_rev,
-                ROUND(SUM(s.profit), 2) AS p_prof,
+                ROUND(SUM(s.net_revenue)::numeric, 2) AS p_rev,
+                ROUND(SUM(s.profit)::numeric, 2) AS p_prof,
                 SUM(s.quantity) AS p_units
             FROM sales s
             JOIN stores st ON s.store_id = st.store_id
@@ -300,14 +291,14 @@ class DashboardService:
                 st.store_id,
                 st.store_name,
                 CONCAT(st.city, ', ', st.region) AS loc,
-                ROUND(SUM(s.net_revenue), 2) AS s_rev,
-                ROUND(SUM(s.profit), 2) AS s_prof,
+                ROUND(SUM(s.net_revenue)::numeric, 2) AS s_rev,
+                ROUND(SUM(s.profit)::numeric, 2) AS s_prof,
                 COUNT(DISTINCT s.order_id) AS s_orders
             FROM sales s
             JOIN stores st ON s.store_id = st.store_id
             JOIN products p ON s.product_id = p.product_id
             WHERE {where_clause}
-            GROUP BY st.store_id, st.store_name, loc
+            GROUP BY st.store_id, st.store_name, st.city, st.region
             ORDER BY s_rev DESC
             LIMIT 5
         """

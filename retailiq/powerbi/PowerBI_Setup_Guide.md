@@ -1,17 +1,17 @@
 # RetailIQ — Power BI Architecture, Modeling & Implementation Guide
 
-This guide details the complete process for connecting Microsoft Power BI to the **RetailIQ MySQL Database (`retailiq_db`)**, creating the enterprise Star Schema data model, implementing DAX measures, and configuring the 7-page analytical report suite.
+This guide details the complete process for connecting Microsoft Power BI to the **RetailIQ PostgreSQL Database (`retailiq_db`)**, creating the enterprise Star Schema data model, implementing DAX measures, and configuring the 7-page analytical report suite.
 
 ---
 
 ## 1. Data Connection Architecture
 
-RetailIQ is designed for direct integration with **Power BI Desktop** and **Power BI Service** using MySQL DirectQuery or Import mode.
+RetailIQ is designed for direct integration with **Power BI Desktop** and **Power BI Service** using the native PostgreSQL connector (DirectQuery or Import mode).
 
 ### Database Credentials
-- **Server:** `127.0.0.1:3306` (or `localhost:3306`)
+- **Server:** `127.0.0.1:5432` (or your Render External Database Host)
 - **Database:** `retailiq_db`
-- **Driver:** MySQL Connector/NET (8.0.32 or newer)
+- **Connector:** Power BI built-in PostgreSQL Database Connector (or Npgsql)
 - **Data Mode:** Import Mode (recommended for high-speed local DAX aggregations) or DirectQuery.
 
 ### Tables / Views to Ingest

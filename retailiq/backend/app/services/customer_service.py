@@ -11,9 +11,9 @@ class CustomerService:
             SELECT 
                 COUNT(*) AS total_customers,
                 COUNT(CASE WHEN frequency > 1 THEN 1 END) AS repeat_customers,
-                ROUND(AVG(monetary_value), 2) AS avg_clv,
-                ROUND(AVG(frequency), 1) AS avg_frequency,
-                ROUND(AVG(avg_order_value), 2) AS overall_aov
+                ROUND(AVG(monetary_value)::numeric, 2) AS avg_clv,
+                ROUND(AVG(frequency)::numeric, 1) AS avg_frequency,
+                ROUND(AVG(avg_order_value)::numeric, 2) AS overall_aov
             FROM vw_customer_rfm
         """
         macro = db.execute(text(macro_sql)).fetchone()
@@ -30,11 +30,11 @@ class CustomerService:
             SELECT 
                 rfm_segment,
                 COUNT(*) AS cust_cnt,
-                ROUND(SUM(monetary_value), 2) AS segment_revenue,
-                ROUND(AVG(monetary_value), 2) AS avg_clv,
-                ROUND(AVG(frequency), 1) AS avg_freq,
-                ROUND(AVG(avg_order_value), 2) AS avg_ticket,
-                ROUND(AVG(recency_days), 0) AS avg_recency
+                ROUND(SUM(monetary_value)::numeric, 2) AS segment_revenue,
+                ROUND(AVG(monetary_value)::numeric, 2) AS avg_clv,
+                ROUND(AVG(frequency)::numeric, 1) AS avg_freq,
+                ROUND(AVG(avg_order_value)::numeric, 2) AS avg_ticket,
+                ROUND(AVG(recency_days)::numeric, 0) AS avg_recency
             FROM vw_customer_rfm
             GROUP BY rfm_segment
             ORDER BY segment_revenue DESC

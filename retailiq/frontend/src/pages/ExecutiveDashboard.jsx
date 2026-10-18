@@ -58,7 +58,7 @@ export default function ExecutiveDashboard({ filters, onNavigate }) {
       setData(res.data);
     } catch (err) {
       console.error('Failed to load dashboard:', err);
-      setError('Failed to retrieve live metrics from FastAPI / MySQL. Please ensure the backend server is running.');
+      setError('Failed to retrieve live metrics from FastAPI backend. Please ensure the backend server and database are running.');
     } finally {
       setLoading(false);
     }
@@ -67,7 +67,7 @@ export default function ExecutiveDashboard({ filters, onNavigate }) {
   if (loading && !data) {
     return (
       <div style={{ padding: '4rem 2rem', textAlign: 'center', color: '#94A3B8' }}>
-        <div style={{ fontSize: '1.1rem', fontWeight: 600 }}>Loading Executive Analytics from MySQL...</div>
+        <div style={{ fontSize: '1.1rem', fontWeight: 600 }}>Loading Executive Analytics...</div>
       </div>
     );
   }
@@ -250,7 +250,7 @@ export default function ExecutiveDashboard({ filters, onNavigate }) {
             </p>
           </div>
           <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-            <span className="badge badge-blue">MySQL Analytical Aggregation</span>
+            <span className="badge badge-blue">PostgreSQL Analytical Aggregation</span>
           </div>
         </div>
 

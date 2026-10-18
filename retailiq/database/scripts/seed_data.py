@@ -1,24 +1,22 @@
 """
 RetailIQ — High-Fidelity Retail Data Generator and Database Seeder
-Populates MySQL 'retailiq_db' with realistic multi-year transactional retail data.
+Target: PostgreSQL (Render or local)
+Populates 'retailiq_db' with realistic multi-year transactional retail data.
 """
 
 import os
+import sys
 import random
+import argparse
 import datetime
 import numpy as np
 import pandas as pd
-import pymysql
-from dotenv import load_dotenv
+from sqlalchemy import create_engine, text
 
-# Load environment configuration
-load_dotenv(os.path.join(os.path.dirname(__file__), "..", "..", ".env"))
-
-DB_HOST = os.getenv("DB_HOST", "127.0.0.1")
-DB_PORT = int(os.getenv("DB_PORT", 3306))
-DB_USER = os.getenv("DB_USER", "root")
-DB_PASSWORD = os.getenv("DB_PASSWORD", "")
-DB_NAME = os.getenv("DB_NAME", "retailiq_db")
+# Add workspace root to sys.path
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..")))
+from retailiq.backend.app.core.config import settings
+from retailiq.database.scripts.init_db import init_database
 
 RANDOM_SEED = 42
 random.seed(RANDOM_SEED)
@@ -73,7 +71,7 @@ CATEGORIES = {
 FIRST_NAMES = ["James", "Emma", "Michael", "Sophia", "David", "Olivia", "Daniel", "Isabella", "Alexander", "Mia",
                "William", "Charlotte", "Matthew", "Amelia", "Lucas", "Harper", "Benjamin", "Evelyn", "Elijah", "Abigail",
                "Henry", "Emily", "Sebastian", "Elizabeth", "Jack", "Avery", "Owen", "Ella", "Samuel", "Scarlett",
-               "Liam", "Noah", "Oliver", "Ethan", "Aiden", "Jackson", "Logan", "Mason", "Lucas", "Oliver"]
+               "Liam", "Noah", "Oliver", "Ethan", "Aiden", "Jackson", "Logan", "Mason"]
 LAST_NAMES = ["Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller", "Davis", "Rodriguez", "Martinez",
               "Hernandez", "Lopez", "Gonzalez", "Wilson", "Anderson", "Thomas", "Taylor", "Moore", "Jackson", "Martin",
               "Lee", "Perez", "Thompson", "White", "Harris", "Sanchez", "Clark", "Ramirez", "Lewis", "Robinson"]
@@ -81,8 +79,9 @@ LAST_NAMES = ["Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Mille
 PAYMENT_METHODS = ["Credit Card", "Debit Card", "UPI/Digital Wallet", "Cash"]
 RETURN_REASONS = ["Size Mismatch", "Defective/Damaged", "Dissatisfied with Quality", "Wrong Item Sent", "Changed Mind"]
 
-def generate_dataset():
-    print(">>> Generating RetailIQ Synthetic Universe...")
+def generate_dataset(is_demo: bool = False):
+    mode_str = "Demo Dataset (~5,000 transactions)" if is_demo else "Full Multi-Year Enterprise Universe (257,000+ transactions)"
+    print(f">>> Generating RetailIQ Synthetic Universe ({mode_str})...")
     
     # 1. Stores (20 Stores)
     stores = []
@@ -107,202 +106,135 @@ def generate_dataset():
                 "manager_name": manager
             })
             store_counter += 1
-    df_stores = pd.DataFrame(stores)
-    print(f"Generated {len(df_stores)} Stores.")
 
-    # 2. Products (Catalog)
+    # 2. Products (61 SKUs)
     products = []
     prod_counter = 1001
     for cat, subcats in CATEGORIES.items():
         for subcat, items in subcats.items():
-            for item_name, cost, price in items:
+            for name, cost, price in items:
                 prod_id = f"PRD{prod_counter}"
-                margin_target = round(((price - cost) / price) * 100, 2)
-                reorder = random.randint(20, 45)
-                safety = int(reorder * 0.45)
+                margin = round(((price - cost) / price) * 100, 2)
                 products.append({
                     "product_id": prod_id,
-                    "product_name": item_name,
+                    "product_name": name,
                     "category": cat,
                     "subcategory": subcat,
                     "cost_price": cost,
                     "unit_price": price,
-                    "target_margin_pct": margin_target,
-                    "reorder_point": reorder,
-                    "safety_stock": safety,
-                    "is_active": 1
+                    "target_margin_pct": margin,
+                    "reorder_point": random.choice([20, 25, 30, 40, 50]),
+                    "safety_stock": random.choice([10, 15, 20, 25]),
+                    "is_active": True
                 })
                 prod_counter += 1
-    df_products = pd.DataFrame(products)
-    print(f"Generated {len(df_products)} Products.")
 
-    # 3. Promotions
+    # 3. Promotions (7 Key Campaigns)
     promotions = [
-        {"promo_id": "PRM001", "promo_name": "New Year Clearance 2023", "promo_type": "Clearance", "discount_pct": 20.0, "start_date": "2023-01-01", "end_date": "2023-01-15"},
-        {"promo_id": "PRM002", "promo_name": "Spring Style Refresh 2023", "promo_type": "Holiday Sale", "discount_pct": 15.0, "start_date": "2023-03-20", "end_date": "2023-04-05"},
-        {"promo_id": "PRM003", "promo_name": "Summer Outdoor Blast 2023", "promo_type": "Seasonal", "discount_pct": 12.0, "start_date": "2023-06-15", "end_date": "2023-07-10"},
-        {"promo_id": "PRM004", "promo_name": "Back to Campus 2023", "promo_type": "Flash Sale", "discount_pct": 18.0, "start_date": "2023-08-15", "end_date": "2023-09-05"},
-        {"promo_id": "PRM005", "promo_name": "Black Friday & Cyber Week 2023", "promo_type": "Holiday Sale", "discount_pct": 25.0, "start_date": "2023-11-20", "end_date": "2023-11-30"},
-        {"promo_id": "PRM006", "promo_name": "Holiday Season Finale 2023", "promo_type": "Holiday Sale", "discount_pct": 20.0, "start_date": "2023-12-15", "end_date": "2023-12-31"},
-        {"promo_id": "PRM007", "promo_name": "New Year Clearance 2024", "promo_type": "Clearance", "discount_pct": 20.0, "start_date": "2024-01-01", "end_date": "2024-01-15"},
-        {"promo_id": "PRM008", "promo_name": "Memorial Weekend 2024", "promo_type": "Flash Sale", "discount_pct": 15.0, "start_date": "2024-05-24", "end_date": "2024-05-29"},
-        {"promo_id": "PRM009", "promo_name": "Mid-Year Tech Fest 2024", "promo_type": "Seasonal", "discount_pct": 18.0, "start_date": "2024-07-10", "end_date": "2024-07-22"},
-        {"promo_id": "PRM010", "promo_name": "Black Friday Mega Deal 2024", "promo_type": "Holiday Sale", "discount_pct": 30.0, "start_date": "2024-11-22", "end_date": "2024-12-02"},
-        {"promo_id": "PRM011", "promo_name": "Christmas Savings 2024", "promo_type": "Holiday Sale", "discount_pct": 22.0, "start_date": "2024-12-16", "end_date": "2024-12-31"},
-        {"promo_id": "PRM012", "promo_name": "Spring Blossom 2025", "promo_type": "Seasonal", "discount_pct": 15.0, "start_date": "2025-03-15", "end_date": "2025-04-01"},
-        {"promo_id": "PRM013", "promo_name": "Summer Clearance 2025", "promo_type": "Clearance", "discount_pct": 20.0, "start_date": "2025-07-01", "end_date": "2025-07-15"},
-        {"promo_id": "PRM014", "promo_name": "Black Friday Extravaganza 2025", "promo_type": "Holiday Sale", "discount_pct": 30.0, "start_date": "2025-11-21", "end_date": "2025-12-01"},
-        {"promo_id": "PRM015", "promo_name": "End of Year Gala 2025", "promo_type": "Holiday Sale", "discount_pct": 25.0, "start_date": "2025-12-18", "end_date": "2025-12-31"}
+        {"promo_id": "PRM101", "promo_name": "New Year Clearance 2023", "promo_type": "Seasonal Clearance", "discount_pct": 15.0, "start_date": datetime.date(2023, 1, 2), "end_date": datetime.date(2023, 1, 20)},
+        {"promo_id": "PRM102", "promo_name": "Spring Fling 2023", "promo_type": "Promotional", "discount_pct": 10.0, "start_date": datetime.date(2023, 4, 10), "end_date": datetime.date(2023, 4, 25)},
+        {"promo_id": "PRM103", "promo_name": "Summer Prime Fest 2023", "promo_type": "Volume Discount", "discount_pct": 20.0, "start_date": datetime.date(2023, 7, 5), "end_date": datetime.date(2023, 7, 18)},
+        {"promo_id": "PRM104", "promo_name": "Black Friday Mega Sale 2023", "promo_type": "Flash Sale", "discount_pct": 25.0, "start_date": datetime.date(2023, 11, 20), "end_date": datetime.date(2023, 11, 30)},
+        {"promo_id": "PRM105", "promo_name": "Holiday Blitz 2024", "promo_type": "Holiday Sale", "discount_pct": 20.0, "start_date": datetime.date(2024, 12, 12), "end_date": datetime.date(2024, 12, 28)},
+        {"promo_id": "PRM106", "promo_name": "Mid-Year Bonanza 2025", "promo_type": "Promotional", "discount_pct": 15.0, "start_date": datetime.date(2025, 6, 1), "end_date": datetime.date(2025, 6, 20)},
+        {"promo_id": "PRM107", "promo_name": "Cyber Week Finale 2025", "promo_type": "Flash Sale", "discount_pct": 25.0, "start_date": datetime.date(2025, 11, 24), "end_date": datetime.date(2025, 12, 5)},
     ]
-    df_promotions = pd.DataFrame(promotions)
 
-    # 4. Customers (2,500 Customers)
+    # 4. Customers
+    cust_count = 500 if is_demo else 2500
     customers = []
-    segments_pool = ["Champions", "Loyal Customers", "Potential Loyalists", "At Risk", "Lost Customers"]
-    segment_weights = [0.15, 0.25, 0.30, 0.18, 0.12]
-    
-    for i in range(1, 2501):
+    all_regions = list(REGIONS.keys())
+    for i in range(1, cust_count + 1):
         cid = f"CUST{i:05d}"
         fn = random.choice(FIRST_NAMES)
         ln = random.choice(LAST_NAMES)
-        reg = random.choice(list(REGIONS.keys()))
-        c_city, c_state = random.choice(REGIONS[reg])
-        seg = np.random.choice(segments_pool, p=segment_weights)
-        s_date = datetime.date(2022, 1, 1) + datetime.timedelta(days=random.randint(0, 1000))
+        domain = random.choice(["gmail.com", "yahoo.com", "outlook.com", "corporate.org"])
+        email = f"{fn.lower()}.{ln.lower()}{random.randint(10, 99)}@{domain}"
+        reg = random.choice(all_regions)
+        city_pair = random.choice(REGIONS[reg])
+        city, st = city_pair
+        phone = f"+1-{random.randint(200, 999)}-{random.randint(200, 999)}-{random.randint(1000, 9999)}"
+        sdate = datetime.date(2022, 1, 1) + datetime.timedelta(days=random.randint(0, 1200))
         customers.append({
             "customer_id": cid,
             "first_name": fn,
             "last_name": ln,
-            "email": f"{fn.lower()}.{ln.lower()}{i}@retailmail.com",
-            "phone": f"+1-555-{random.randint(100, 999)}-{random.randint(1000, 9999)}",
-            "city": c_city,
-            "state": c_state,
+            "email": email,
+            "phone": phone,
+            "city": city,
+            "state": st,
             "region": reg,
-            "customer_segment": seg,
-            "signup_date": s_date
+            "customer_segment": "Potential Loyalists",
+            "signup_date": sdate
         })
-    df_customers = pd.DataFrame(customers)
-    print(f"Generated {len(df_customers)} Customers.")
 
-    # 5. Inventory Levels (Products x Stores = 57 x 20 = 1,140 rows)
+    # 5. Inventory (Store x Product pairs = 20 * 61 = 1220 rows)
     inventory = []
-    inv_id = 1
-    # We will identify ~5-8 products that have critical low inventory vs high sales
-    for s_idx, st in df_stores.iterrows():
-        for p_idx, pr in df_products.iterrows():
-            # Standard stock: 40 to 180
-            # Low stock products: product_id in PRD1001, PRD1005, PRD1012, PRD1025
-            is_critical = pr["product_id"] in ["PRD1001", "PRD1005", "PRD1012", "PRD1025"] and random.random() < 0.65
-            if is_critical:
-                stock = random.randint(2, 12)  # High stockout risk
-            elif random.random() < 0.15:
-                stock = random.randint(15, 28) # Medium risk
-            else:
-                stock = random.randint(45, 180) # Healthy
-                
-            last_restock = datetime.date(2025, 12, random.randint(1, 28))
+    inv_counter = 1
+    for s in stores:
+        for p in products:
+            inv_id = f"INV{inv_counter:05d}"
+            curr_stock = random.randint(5, 120)
+            safety = p["safety_stock"]
+            reorder = p["reorder_point"]
+            last_restock = datetime.date(2025, random.randint(10, 12), random.randint(1, 28))
             inventory.append({
-                "inventory_id": f"INV{inv_id:06d}",
-                "product_id": pr["product_id"],
-                "store_id": st["store_id"],
-                "current_stock": stock,
-                "safety_stock": pr["safety_stock"],
-                "reorder_level": pr["reorder_point"],
+                "inventory_id": inv_id,
+                "product_id": p["product_id"],
+                "store_id": s["store_id"],
+                "current_stock": curr_stock,
+                "safety_stock": safety,
+                "reorder_level": reorder,
                 "last_restocked_date": last_restock
             })
-            inv_id += 1
-    df_inventory = pd.DataFrame(inventory)
-    print(f"Generated {len(df_inventory)} Inventory Records.")
+            inv_counter += 1
 
-    # 6. Sales Transactions (Multi-Year: 2023-01-01 to 2025-12-31)
-    # Target: ~150,000 transaction lines
-    start_date = datetime.date(2023, 1, 1)
-    end_date = datetime.date(2025, 12, 31)
-    total_days = (end_date - start_date).days + 1
-    
-    # Pareto weights for products: top products get chosen more often
-    num_prods = len(df_products)
-    prod_probs = np.exp(-np.linspace(0, 3.5, num_prods))
-    prod_probs /= prod_probs.sum()
-    
-    # Store weights: Flagships get more traffic
-    store_weights = [1.8 if s["store_type"] == "Flagship" else (1.2 if s["store_type"] == "Shopping Mall" else 0.8) for _, s in df_stores.iterrows()]
-    store_weights = np.array(store_weights) / sum(store_weights)
-    
-    # Customer repeat probabilities: Champions get more transactions
-    cust_weights = []
-    for _, c in df_customers.iterrows():
-        if c["customer_segment"] == "Champions":
-            cust_weights.append(5.0)
-        elif c["customer_segment"] == "Loyal Customers":
-            cust_weights.append(3.0)
-        elif c["customer_segment"] == "Potential Loyalists":
-            cust_weights.append(1.8)
-        elif c["customer_segment"] == "At Risk":
-            cust_weights.append(0.8)
-        else:
-            cust_weights.append(0.3)
-    cust_weights = np.array(cust_weights) / sum(cust_weights)
-
+    # 6. Sales & Returns
     sales = []
     returns = []
+    order_id_counter = 100001
+    return_id_counter = 50001
     
-    order_id_counter = 100000
-    return_id_counter = 10000
-    
-    print("Simulating daily retail transactions across 2023-2025...")
-    
-    # Map promotions by date
-    promo_records = df_promotions.to_dict("records")
-    for p in promo_records:
-        p["start"] = datetime.datetime.strptime(p["start_date"], "%Y-%m-%d").date()
-        p["end"] = datetime.datetime.strptime(p["end_date"], "%Y-%m-%d").date()
+    start_date = datetime.date(2025, 7, 1) if is_demo else datetime.date(2023, 1, 1)
+    end_date = datetime.date(2025, 12, 31)
+    days_range = (end_date - start_date).days + 1
 
-    # Pre-extract product dicts for fast lookup
-    prod_dict = {p["product_id"]: p for p in df_products.to_dict("records")}
-    store_ids = df_stores["store_id"].values
-    prod_ids = df_products["product_id"].values
-    cust_ids = df_customers["customer_id"].values
+    prod_ids = [p["product_id"] for p in products]
+    prod_dict = {p["product_id"]: p for p in products}
+    cust_ids = [c["customer_id"] for c in customers]
+    store_ids = [s["store_id"] for s in stores]
+
+    cat_weights = {"Electronics": 0.35, "Apparel": 0.28, "Home & Kitchen": 0.18, "Health & Beauty": 0.12, "Sports & Outdoors": 0.07}
+    prod_probs = []
+    for p in products:
+        base_w = cat_weights[p["category"]]
+        prod_probs.append(base_w / 12.0)
+    prod_probs = np.array(prod_probs)
+    prod_probs /= prod_probs.sum()
 
     current_date = start_date
-    while current_date <= end_date:
-        # Seasonality factors:
-        month = current_date.month
+    for day_idx in range(days_range):
+        is_q4 = current_date.month in [10, 11, 12]
         is_weekend = current_date.weekday() >= 5
+        season_boost = 1.35 if is_q4 else (1.10 if is_weekend else 1.0)
         
-        # Base daily orders across all stores ~ 100 to 140
-        # Holiday bump in Nov-Dec: 2.2x
-        # Summer bump in June-July: 1.25x
-        season_multiplier = 1.0
-        if month in [11, 12]:
-            season_multiplier = 2.3
-        elif month in [6, 7]:
-            season_multiplier = 1.25
-        elif month in [1, 2]:
-            season_multiplier = 0.85
-            
-        weekend_multiplier = 1.35 if is_weekend else 1.0
+        day_promo = None
+        for p in promotions:
+            if p["start_date"] <= current_date <= p["end_date"]:
+                day_promo = p
+                season_boost *= 1.4
+                break
+                
+        base_orders = int(random.randint(8, 20) * season_boost) if is_demo else int(random.randint(160, 270) * season_boost)
+        chosen_custs = np.random.choice(cust_ids, size=base_orders, replace=True)
+        chosen_stores = np.random.choice(store_ids, size=base_orders, replace=True)
         
-        # Growth factor year over year: 2023=1.0, 2024=1.12, 2025=1.28
-        y_mult = 1.0 if current_date.year == 2023 else (1.12 if current_date.year == 2024 else 1.28)
-        
-        daily_order_count = int(115 * season_multiplier * weekend_multiplier * y_mult + random.randint(-10, 10))
-        
-        # Active promo for the day
-        active_promos = [pr for pr in promo_records if pr["start"] <= current_date <= pr["end"]]
-        day_promo = active_promos[0] if active_promos else None
-        
-        # Sample customers, stores
-        chosen_custs = np.random.choice(cust_ids, size=daily_order_count, p=cust_weights)
-        chosen_stores = np.random.choice(store_ids, size=daily_order_count, p=store_weights)
-        
-        for i in range(daily_order_count):
+        for i in range(base_orders):
             order_id = f"ORD{order_id_counter}"
             order_id_counter += 1
             cid = chosen_custs[i]
             sid = chosen_stores[i]
             
-            # Basket size: 1 to 3 items per order
             basket_size = 1 if random.random() < 0.70 else (2 if random.random() < 0.90 else 3)
             chosen_prods = np.random.choice(prod_ids, size=basket_size, replace=False, p=prod_probs)
             
@@ -318,14 +250,12 @@ def generate_dataset():
                 unit_price = p_info["unit_price"]
                 cost_price = p_info["cost_price"]
                 
-                # Discount calculation
                 promo_id = None
                 discount_pct = 0.0
                 if day_promo:
                     promo_id = day_promo["promo_id"]
                     discount_pct = day_promo["discount_pct"] / 100.0
                 elif random.random() < 0.15:
-                    # Random clearance or loyalty member coupon
                     discount_pct = random.choice([0.05, 0.10, 0.15])
                     
                 gross_rev = round(unit_price * qty, 2)
@@ -334,10 +264,9 @@ def generate_dataset():
                 total_cost = round(cost_price * qty, 2)
                 profit = round(net_rev - total_cost, 2)
                 
-                # Return probability: higher for Apparel (12%), lower for Electronics (3%), Home (5%)
                 cat = p_info["category"]
                 ret_prob = 0.12 if cat == "Apparel" else (0.03 if cat == "Electronics" else 0.05)
-                is_returned = 1 if random.random() < ret_prob else 0
+                is_returned = random.random() < ret_prob
                 
                 sales.append({
                     "order_id": order_id,
@@ -373,169 +302,88 @@ def generate_dataset():
                     
         current_date += datetime.timedelta(days=1)
         
+    df_stores = pd.DataFrame(stores)
+    df_products = pd.DataFrame(products)
+    df_promotions = pd.DataFrame(promotions)
+    df_customers = pd.DataFrame(customers)
+    df_inventory = pd.DataFrame(inventory)
     df_sales = pd.DataFrame(sales)
     df_returns = pd.DataFrame(returns)
+
     print(f"Total Sales rows generated: {len(df_sales):,}")
     print(f"Total Returns generated: {len(df_returns):,}")
 
-    # Export clean CSVs to data/raw/
-    print("Writing CSV files to data directory...")
-    df_stores.to_csv(os.path.join(DATA_DIR, "stores.csv"), index=False)
-    df_products.to_csv(os.path.join(DATA_DIR, "products.csv"), index=False)
-    df_promotions.to_csv(os.path.join(DATA_DIR, "promotions.csv"), index=False)
-    df_customers.to_csv(os.path.join(DATA_DIR, "customers.csv"), index=False)
-    df_inventory.to_csv(os.path.join(DATA_DIR, "inventory.csv"), index=False)
-    df_sales.to_csv(os.path.join(DATA_DIR, "sales.csv"), index=False)
-    df_returns.to_csv(os.path.join(DATA_DIR, "returns.csv"), index=False)
-    print("CSV files successfully written.")
-
     return df_stores, df_products, df_promotions, df_customers, df_inventory, df_sales, df_returns
 
-def populate_mysql(df_stores, df_products, df_promotions, df_customers, df_inventory, df_sales, df_returns):
-    print("\n>>> Connecting to MySQL to execute DDL and populate data...")
-    conn = pymysql.connect(
-        host=DB_HOST,
-        port=DB_PORT,
-        user=DB_USER,
-        password=DB_PASSWORD,
-        autocommit=False,
-        charset='utf8mb4'
-    )
-    cursor = conn.cursor()
+def populate_postgres(df_stores, df_products, df_promotions, df_customers, df_inventory, df_sales, df_returns):
+    url = settings.database_url
+    print(f"\n>>> Connecting to PostgreSQL to seed data: {url.split('@')[-1] if '@' in url else url}...")
+    engine = create_engine(url, echo=False)
+
+    # Initialize schema first if not already initialized
+    init_database(url)
+
+    print("Populating PostgreSQL tables...")
     
-    # Read schema SQL
-    schema_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "01_schema.sql"))
-    with open(schema_path, "r", encoding="utf-8") as f:
-        schema_sql = f.read()
+    with engine.begin() as conn:
+        print("  Inserting stores...")
+        df_stores.to_sql("stores", conn, if_exists="append", index=False, method="multi", chunksize=1000)
         
-    print("Executing 01_schema.sql...")
-    for stmt in schema_sql.split(";"):
-        stmt = stmt.strip()
-        if stmt:
-            cursor.execute(stmt)
-    conn.commit()
-    print("Tables created successfully.")
-    
-    # Insert Stores
-    print("Inserting stores...")
-    sql_stores = """
-        INSERT INTO stores (store_id, store_name, city, state, region, store_type, square_feet, opening_date, manager_name)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-    """
-    cursor.executemany(sql_stores, df_stores.values.tolist())
-    conn.commit()
-    
-    # Insert Customers
-    print("Inserting customers...")
-    sql_cust = """
-        INSERT INTO customers (customer_id, first_name, last_name, email, phone, city, state, region, customer_segment, signup_date)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-    """
-    cursor.executemany(sql_cust, df_customers.values.tolist())
-    conn.commit()
+        print("  Inserting customers...")
+        df_customers.to_sql("customers", conn, if_exists="append", index=False, method="multi", chunksize=1000)
+        
+        print("  Inserting products...")
+        df_products.to_sql("products", conn, if_exists="append", index=False, method="multi", chunksize=1000)
+        
+        print("  Inserting promotions...")
+        df_promotions.to_sql("promotions", conn, if_exists="append", index=False, method="multi", chunksize=1000)
+        
+        print("  Inserting inventory...")
+        df_inventory.to_sql("inventory", conn, if_exists="append", index=False, method="multi", chunksize=1000)
 
-    # Insert Products
-    print("Inserting products...")
-    sql_prod = """
-        INSERT INTO products (product_id, product_name, category, subcategory, cost_price, unit_price, target_margin_pct, reorder_point, safety_stock, is_active)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-    """
-    cursor.executemany(sql_prod, df_products.values.tolist())
-    conn.commit()
+        # Sales and Returns batch insert
+        print(f"  Inserting {len(df_sales):,} sales records in batches...")
+        df_sales.to_sql("sales", conn, if_exists="append", index=False, method="multi", chunksize=2000)
 
-    # Insert Promotions
-    print("Inserting promotions...")
-    sql_promo = """
-        INSERT INTO promotions (promo_id, promo_name, promo_type, discount_pct, start_date, end_date)
-        VALUES (%s, %s, %s, %s, %s, %s)
-    """
-    cursor.executemany(sql_promo, df_promotions.values.tolist())
-    conn.commit()
+        print(f"  Inserting {len(df_returns):,} return records...")
+        df_returns.to_sql("returns", conn, if_exists="append", index=False, method="multi", chunksize=2000)
 
-    # Insert Inventory
-    print("Inserting inventory...")
-    sql_inv = """
-        INSERT INTO inventory (inventory_id, product_id, store_id, current_stock, safety_stock, reorder_level, last_restocked_date)
-        VALUES (%s, %s, %s, %s, %s, %s, %s)
-    """
-    cursor.executemany(sql_inv, df_inventory.values.tolist())
-    conn.commit()
-
-    # Replace NaN with None for MySQL compatibility
-    df_sales = df_sales.astype(object).where(pd.notnull(df_sales), None)
-    df_returns = df_returns.astype(object).where(pd.notnull(df_returns), None)
-    df_inventory = df_inventory.astype(object).where(pd.notnull(df_inventory), None)
-    df_promotions = df_promotions.astype(object).where(pd.notnull(df_promotions), None)
-    df_customers = df_customers.astype(object).where(pd.notnull(df_customers), None)
-
-    # Insert Sales in chunks of 5000 rows
-    print(f"Inserting {len(df_sales):,} sales records in batches...")
-    sql_sales = """
-        INSERT INTO sales (
-            order_id, product_id, order_date, order_timestamp, customer_id, store_id, 
-            promo_id, quantity, unit_price, cost_price, discount_amount, gross_revenue, 
-            net_revenue, profit, payment_method, is_returned
-        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-    """
-    sales_rows = df_sales.values.tolist()
-    batch_size = 5000
-    for idx in range(0, len(sales_rows), batch_size):
-        chunk = sales_rows[idx:idx + batch_size]
-        cursor.executemany(sql_sales, chunk)
-        conn.commit()
-        if (idx // batch_size) % 5 == 0:
-            print(f"  Inserted {min(idx + batch_size, len(sales_rows)):,} / {len(sales_rows):,} rows...")
-
-    # Insert Returns
-    print(f"Inserting {len(df_returns):,} return records...")
-    sql_returns = """
-        INSERT INTO returns (return_id, order_id, product_id, return_date, return_reason, refund_amount)
-        VALUES (%s, %s, %s, %s, %s, %s)
-    """
-    ret_rows = df_returns.values.tolist()
-    for idx in range(0, len(ret_rows), batch_size):
-        chunk = ret_rows[idx:idx + batch_size]
-        cursor.executemany(sql_returns, chunk)
-        conn.commit()
-
-    # Read and execute 02_views.sql
+    # Re-apply views
     views_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "views", "02_views.sql"))
-    print("Creating Analytical Views from 02_views.sql...")
     with open(views_path, "r", encoding="utf-8") as f:
         views_sql = f.read()
-    for stmt in views_sql.split(";"):
-        stmt = stmt.strip()
-        if stmt:
-            cursor.execute(stmt)
-    conn.commit()
+
+    with engine.begin() as conn:
+        for stmt in views_sql.split(";"):
+            s = stmt.strip()
+            if s:
+                conn.execute(text(s))
 
     # Verify counts
-    cursor.execute("SELECT COUNT(*) FROM sales")
-    sales_cnt = cursor.fetchone()[0]
-    cursor.execute("SELECT COUNT(*) FROM customers")
-    cust_cnt = cursor.fetchone()[0]
-    cursor.execute("SELECT COUNT(*) FROM products")
-    prod_cnt = cursor.fetchone()[0]
-    cursor.execute("SELECT COUNT(*) FROM stores")
-    store_cnt = cursor.fetchone()[0]
-    cursor.execute("SELECT COUNT(*) FROM inventory")
-    inv_cnt = cursor.fetchone()[0]
-    cursor.execute("SELECT COUNT(*) FROM returns")
-    ret_cnt = cursor.fetchone()[0]
+    with engine.connect() as conn:
+        sales_cnt = conn.execute(text("SELECT COUNT(*) FROM sales")).scalar() or 0
+        cust_cnt = conn.execute(text("SELECT COUNT(*) FROM customers")).scalar() or 0
+        prod_cnt = conn.execute(text("SELECT COUNT(*) FROM products")).scalar() or 0
+        store_cnt = conn.execute(text("SELECT COUNT(*) FROM stores")).scalar() or 0
+        inv_cnt = conn.execute(text("SELECT COUNT(*) FROM inventory")).scalar() or 0
+        ret_cnt = conn.execute(text("SELECT COUNT(*) FROM returns")).scalar() or 0
 
-    print("\n==========================================")
-    print("Database seeding completed successfully!")
-    print(f"Stores:     {store_cnt}")
-    print(f"Products:   {prod_cnt}")
-    print(f"Customers:  {cust_cnt}")
-    print(f"Inventory:  {inv_cnt}")
-    print(f"Sales:      {sales_cnt:,}")
-    print(f"Returns:    {ret_cnt:,}")
-    print("==========================================")
-
-    cursor.close()
-    conn.close()
+    print("\n=======================================================")
+    print(" PostgreSQL Database Seeding Completed Successfully!")
+    print(f" Stores:     {store_cnt}")
+    print(f" Products:   {prod_cnt}")
+    print(f" Customers:  {cust_cnt}")
+    print(f" Inventory:  {inv_cnt}")
+    print(f" Sales:      {sales_cnt:,}")
+    print(f" Returns:    {ret_cnt:,}")
+    print("=======================================================\n")
 
 if __name__ == "__main__":
-    stores, prods, promos, custs, inv, sales, rets = generate_dataset()
-    populate_mysql(stores, prods, promos, custs, inv, sales, rets)
+    parser = argparse.ArgumentParser(description="Seed RetailIQ PostgreSQL Database")
+    parser.add_argument("--full", action="store_true", help="Generate full 257k+ records universe (takes longer)")
+    parser.add_argument("--demo", action="store_true", help="Generate lightweight demo dataset (~5,000 records)")
+    args = parser.parse_args()
+
+    is_demo = not args.full # Default to demo for safe, fast cloud deployments
+    stores, prods, promos, custs, inv, sales, rets = generate_dataset(is_demo=is_demo)
+    populate_postgres(stores, prods, promos, custs, inv, sales, rets)

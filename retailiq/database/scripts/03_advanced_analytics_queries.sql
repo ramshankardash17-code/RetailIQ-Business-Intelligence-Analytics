@@ -2,23 +2,22 @@
 -- RetailIQ — Advanced SQL Analytics & Portfolio Queries
 -- Demonstrating CTEs, Window Functions (ROW_NUMBER, RANK, LAG, LEAD, Rolling Avg),
 -- YoY / MoM Growth, RFM Segmentation, Inventory Turnover, and Return Impact
+-- Target DBMS: PostgreSQL 14+ / Render PostgreSQL
 -- =============================================================================
-
-USE retailiq_db;
 
 -- -----------------------------------------------------------------------------
 -- Query 1: Monthly Revenue, Profit, MoM and YoY Growth using CTE & LAG Window Function
 -- -----------------------------------------------------------------------------
 WITH MonthlyAgg AS (
     SELECT 
-        YEAR(order_date) AS yr,
-        MONTH(order_date) AS mth,
-        DATE_FORMAT(order_date, '%Y-%m') AS ym,
-        ROUND(SUM(net_revenue), 2) AS monthly_revenue,
-        ROUND(SUM(profit), 2) AS monthly_profit,
+        EXTRACT(YEAR FROM order_date)::INT AS yr,
+        EXTRACT(MONTH FROM order_date)::INT AS mth,
+        TO_CHAR(order_date, 'YYYY-MM') AS ym,
+        ROUND(SUM(net_revenue)::numeric, 2) AS monthly_revenue,
+        ROUND(SUM(profit)::numeric, 2) AS monthly_profit,
         COUNT(DISTINCT order_id) AS total_orders
     FROM sales
-    GROUP BY YEAR(order_date), MONTH(order_date), DATE_FORMAT(order_date, '%Y-%m')
+    GROUP BY EXTRACT(YEAR FROM order_date), EXTRACT(MONTH FROM order_date), TO_CHAR(order_date, 'YYYY-MM')
 ),
 MonthlyWithLag AS (
     SELECT 
@@ -38,9 +37,9 @@ SELECT
     ym,
     monthly_revenue,
     monthly_profit,
-    ROUND((monthly_profit / monthly_revenue) * 100, 2) AS profit_margin_pct,
-    ROUND(((monthly_revenue - prev_month_rev) / NULLIF(prev_month_rev, 0)) * 100, 2) AS mom_revenue_growth_pct,
-    ROUND(((monthly_revenue - prev_year_rev) / NULLIF(prev_year_rev, 0)) * 100, 2) AS yoy_revenue_growth_pct
+    ROUND(((monthly_profit / NULLIF(monthly_revenue, 0)) * 100)::numeric, 2) AS profit_margin_pct,
+    ROUND((((monthly_revenue - prev_month_rev) / NULLIF(prev_month_rev, 0)) * 100)::numeric, 2) AS mom_revenue_growth_pct,
+    ROUND((((monthly_revenue - prev_year_rev) / NULLIF(prev_year_rev, 0)) * 100)::numeric, 2) AS yoy_revenue_growth_pct
 FROM MonthlyWithLag
 ORDER BY ym;
 
@@ -53,9 +52,9 @@ WITH ProductCatRevenue AS (
         p.product_id,
         p.product_name,
         SUM(s.quantity) AS units_sold,
-        ROUND(SUM(s.net_revenue), 2) AS total_revenue,
-        ROUND(SUM(s.profit), 2) AS total_profit,
-        ROUND(SUM(s.profit) / NULLIF(SUM(s.net_revenue), 0) * 100, 2) AS profit_margin_pct
+        ROUND(SUM(s.net_revenue)::numeric, 2) AS total_revenue,
+        ROUND(SUM(s.profit)::numeric, 2) AS total_profit,
+        ROUND(((SUM(s.profit) / NULLIF(SUM(s.net_revenue), 0)) * 100)::numeric, 2) AS profit_margin_pct
     FROM products p
     JOIN sales s ON p.product_id = s.product_id
     GROUP BY p.category, p.product_id, p.product_name
@@ -89,7 +88,7 @@ ORDER BY category, category_rank;
 WITH DailyRevenue AS (
     SELECT 
         order_date,
-        ROUND(SUM(net_revenue), 2) AS daily_rev,
+        ROUND(SUM(net_revenue)::numeric, 2) AS daily_rev,
         COUNT(DISTINCT order_id) AS daily_orders
     FROM sales
     GROUP BY order_date
@@ -98,10 +97,10 @@ SELECT
     order_date,
     daily_rev,
     daily_orders,
-    ROUND(AVG(daily_rev) OVER (
+    ROUND((AVG(daily_rev) OVER (
         ORDER BY order_date 
         ROWS BETWEEN 29 PRECEDING AND CURRENT ROW
-    ), 2) AS rolling_30d_avg_revenue
+    ))::numeric, 2) AS rolling_30d_avg_revenue
 FROM DailyRevenue
 ORDER BY order_date;
 
@@ -113,8 +112,8 @@ WITH StoreSales AS (
         st.region,
         st.store_id,
         st.store_name,
-        ROUND(SUM(s.net_revenue), 2) AS store_revenue,
-        ROUND(SUM(s.profit), 2) AS store_profit,
+        ROUND(SUM(s.net_revenue)::numeric, 2) AS store_revenue,
+        ROUND(SUM(s.profit)::numeric, 2) AS store_profit,
         COUNT(DISTINCT s.order_id) AS total_orders
     FROM stores st
     JOIN sales s ON st.store_id = s.store_id
@@ -125,9 +124,9 @@ SELECT
     store_name,
     store_revenue,
     store_profit,
-    ROUND((store_profit / store_revenue) * 100, 2) AS profit_margin_pct,
+    ROUND(((store_profit / NULLIF(store_revenue, 0)) * 100)::numeric, 2) AS profit_margin_pct,
     SUM(store_revenue) OVER (PARTITION BY region) AS regional_total_revenue,
-    ROUND((store_revenue / SUM(store_revenue) OVER (PARTITION BY region)) * 100, 2) AS share_of_region_pct,
+    ROUND(((store_revenue / NULLIF(SUM(store_revenue) OVER (PARTITION BY region), 0)) * 100)::numeric, 2) AS share_of_region_pct,
     RANK() OVER (PARTITION BY region ORDER BY store_revenue DESC) AS store_regional_rank
 FROM StoreSales
 ORDER BY region, store_regional_rank;
@@ -135,21 +134,32 @@ ORDER BY region, store_regional_rank;
 -- -----------------------------------------------------------------------------
 -- Query 5: Discount Impact Analysis on Margin and Volume (Binned Case Study)
 -- -----------------------------------------------------------------------------
+WITH BinnedSales AS (
+    SELECT 
+        CASE 
+            WHEN discount_amount = 0 THEN '0% No Discount'
+            WHEN (discount_amount / NULLIF(gross_revenue, 0)) <= 0.10 THEN '1% - 10% Low Discount'
+            WHEN (discount_amount / NULLIF(gross_revenue, 0)) <= 0.20 THEN '11% - 20% Moderate Discount'
+            ELSE '21%+ High Clearance Discount'
+        END AS discount_tier,
+        order_id,
+        quantity,
+        gross_revenue,
+        discount_amount,
+        net_revenue,
+        profit
+    FROM sales
+)
 SELECT 
-    CASE 
-        WHEN discount_amount = 0 THEN '0% No Discount'
-        WHEN (discount_amount / gross_revenue) <= 0.10 THEN '1% - 10% Low Discount'
-        WHEN (discount_amount / gross_revenue) <= 0.20 THEN '11% - 20% Moderate Discount'
-        ELSE '21%+ High Clearance Discount'
-    END AS discount_tier,
+    discount_tier,
     COUNT(DISTINCT order_id) AS order_count,
     SUM(quantity) AS total_units_sold,
-    ROUND(SUM(gross_revenue), 2) AS gross_sales,
-    ROUND(SUM(discount_amount), 2) AS total_discount_given,
-    ROUND(SUM(net_revenue), 2) AS net_revenue,
-    ROUND(SUM(profit), 2) AS total_profit,
-    ROUND(SUM(profit) / NULLIF(SUM(net_revenue), 0) * 100, 2) AS profit_margin_pct
-FROM sales
+    ROUND(SUM(gross_revenue)::numeric, 2) AS gross_sales,
+    ROUND(SUM(discount_amount)::numeric, 2) AS total_discount_given,
+    ROUND(SUM(net_revenue)::numeric, 2) AS net_revenue,
+    ROUND(SUM(profit)::numeric, 2) AS total_profit,
+    ROUND(((SUM(profit) / NULLIF(SUM(net_revenue), 0)) * 100)::numeric, 2) AS profit_margin_pct
+FROM BinnedSales
 GROUP BY discount_tier
 ORDER BY net_revenue DESC;
 
@@ -163,12 +173,12 @@ WITH CustomerMetrics AS (
         c.region,
         c.signup_date,
         COUNT(DISTINCT s.order_id) AS order_count,
-        ROUND(SUM(s.net_revenue), 2) AS total_spent,
-        ROUND(AVG(s.net_revenue), 2) AS avg_basket_size,
-        DATEDIFF('2025-12-31', MAX(s.order_date)) AS days_since_last_purchase
+        ROUND(SUM(s.net_revenue)::numeric, 2) AS total_spent,
+        ROUND(AVG(s.net_revenue)::numeric, 2) AS avg_basket_size,
+        (DATE '2025-12-31' - MAX(s.order_date))::INT AS days_since_last_purchase
     FROM customers c
     JOIN sales s ON c.customer_id = s.customer_id
-    GROUP BY c.customer_id, full_name, c.region, c.signup_date
+    GROUP BY c.customer_id, c.first_name, c.last_name, c.region, c.signup_date
 )
 SELECT 
     customer_id,
@@ -199,7 +209,7 @@ WITH ProductVelocity AS (
         p.product_name,
         p.category,
         COALESCE(SUM(s.quantity), 0) AS units_sold_180d,
-        ROUND(COALESCE(SUM(s.quantity), 0) / 180.0, 2) AS daily_sales_velocity,
+        ROUND((COALESCE(SUM(s.quantity), 0)::numeric / 180.0), 2) AS daily_sales_velocity,
         COALESCE(inv.current_stock, 0) AS total_inventory
     FROM products p
     LEFT JOIN sales s ON p.product_id = s.product_id AND s.order_date >= '2025-07-01'
@@ -217,9 +227,9 @@ SELECT
     units_sold_180d,
     daily_sales_velocity,
     total_inventory,
-    ROUND(total_inventory / NULLIF(daily_sales_velocity, 0), 1) AS estimated_days_to_stockout,
+    ROUND((total_inventory::numeric / NULLIF(daily_sales_velocity, 0)), 1) AS estimated_days_to_stockout,
     CASE 
-        WHEN daily_sales_velocity >= 5.0 AND (total_inventory / NULLIF(daily_sales_velocity, 0)) < 15 THEN 'Fast-Moving (High Stockout Risk)'
+        WHEN daily_sales_velocity >= 5.0 AND (total_inventory::numeric / NULLIF(daily_sales_velocity, 0)) < 15 THEN 'Fast-Moving (High Stockout Risk)'
         WHEN daily_sales_velocity >= 3.0 THEN 'Fast-Moving (Healthy)'
         WHEN daily_sales_velocity BETWEEN 0.8 AND 2.9 THEN 'Moderate Turnover'
         ELSE 'Slow-Moving / Overstocked'
@@ -234,10 +244,10 @@ SELECT
     p.category,
     COUNT(DISTINCT s.order_id) AS total_orders,
     COUNT(DISTINCT r.return_id) AS total_returns,
-    ROUND(COUNT(DISTINCT r.return_id) / NULLIF(COUNT(DISTINCT s.order_id), 0) * 100, 2) AS return_rate_pct,
-    ROUND(SUM(s.net_revenue), 2) AS gross_sales_volume,
-    ROUND(COALESCE(SUM(r.refund_amount), 0), 2) AS total_refunded_amount,
-    ROUND(COALESCE(SUM(r.refund_amount), 0) / NULLIF(SUM(s.net_revenue), 0) * 100, 2) AS refund_pct_of_sales
+    ROUND(((COUNT(DISTINCT r.return_id)::numeric / NULLIF(COUNT(DISTINCT s.order_id), 0)) * 100)::numeric, 2) AS return_rate_pct,
+    ROUND(SUM(s.net_revenue)::numeric, 2) AS gross_sales_volume,
+    ROUND(COALESCE(SUM(r.refund_amount), 0)::numeric, 2) AS total_refunded_amount,
+    ROUND(((COALESCE(SUM(r.refund_amount), 0) / NULLIF(SUM(s.net_revenue), 0)) * 100)::numeric, 2) AS refund_pct_of_sales
 FROM products p
 JOIN sales s ON p.product_id = s.product_id
 LEFT JOIN returns r ON s.order_id = r.order_id AND s.product_id = r.product_id

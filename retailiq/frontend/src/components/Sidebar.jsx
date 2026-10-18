@@ -145,10 +145,10 @@ export default function Sidebar({ activeTab, setActiveTab }) {
           <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#10B981', boxShadow: '0 0 8px #10B981' }} />
           <div>
             <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#F1F5F9' }}>
-              MySQL 8.0 Live
+              PostgreSQL Live
             </div>
             <div style={{ fontSize: '0.68rem', color: '#64748B' }}>
-              retailiq_db (257k rows)
+              retailiq_db
             </div>
           </div>
         </div>

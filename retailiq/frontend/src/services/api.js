@@ -1,13 +1,17 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api';
+// Support VITE_API_BASE_URL (standard) or VITE_API_URL (legacy), fallback to localhost:8000
+const RAW_URL = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || 'http://localhost:8000';
+// Normalize URL: strip trailing slash and optional /api suffix
+const SERVER_ROOT = RAW_URL.replace(/\/api\/?$/, '').replace(/\/+$/, '');
+const API_BASE_URL = `${SERVER_ROOT}/api`;
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 15000,
+  timeout: 20000,
 });
 
 export const api = {
@@ -45,7 +49,7 @@ export const api = {
   getRuleBasedInsights: () => apiClient.get('/insights/rule-based'),
 
   // Backend Health
-  getSystemHealth: () => axios.get('http://127.0.0.1:8000/'),
+  getSystemHealth: () => axios.get(`${SERVER_ROOT}/health`),
 };
 
 export default api;

@@ -55,7 +55,7 @@ export default function StoreRegionalAnalytics({ filters }) {
   };
 
   if (loading && !data) {
-    return <div style={{ padding: '3rem', textAlign: 'center', color: '#94A3B8' }}>Loading Store Footprint Analytics from MySQL...</div>;
+    return <div style={{ padding: '3rem', textAlign: 'center', color: '#94A3B8' }}>Loading Store Footprint Analytics...</div>;
   }
 
   const regionalSummary = data?.regional_summary || [];

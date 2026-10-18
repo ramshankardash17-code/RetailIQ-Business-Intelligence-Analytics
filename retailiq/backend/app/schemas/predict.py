@@ -91,5 +91,6 @@ class UploadSummaryResponse(BaseModel):
     invalid_rows_skipped: int
     duplicate_rows_ignored: int
     records_inserted_to_mysql: int
+    records_inserted: Optional[int] = None
     validation_status: str
     sample_errors: List[str]

@@ -61,7 +61,7 @@ export default function PowerBIReports() {
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
               <span className="badge badge-blue">ENTERPRISE POWER BI HUB</span>
-              <span style={{ fontSize: '0.8rem', color: '#10B981', fontWeight: 600 }}>MySQL Direct Connection Ready</span>
+              <span style={{ fontSize: '0.8rem', color: '#10B981', fontWeight: 600 }}>PostgreSQL Direct Connection Ready</span>
             </div>
             <h2 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#F8FAFC', margin: '0.35rem 0' }}>
               Microsoft Power BI Enterprise Analytics Suite
@@ -151,7 +151,7 @@ export default function PowerBIReports() {
             </h3>
 
             <p style={{ fontSize: '0.85rem', color: '#94A3B8', maxWidth: '620px', lineHeight: 1.5, marginBottom: '1.5rem' }}>
-              This section is configured to embed your live Microsoft Power BI report. Enter your published Power BI URL below or use the instructions in <code>powerbi/PowerBI_Setup_Guide.md</code> to connect Power BI Desktop directly to your local MySQL database (<code>retailiq_db</code>).
+              This section is configured to embed your live Microsoft Power BI report. Enter your published Power BI URL below or use the instructions in <code>powerbi/PowerBI_Setup_Guide.md</code> to connect Power BI Desktop directly to your PostgreSQL database (<code>retailiq_db</code>).
             </p>
 
             <div style={{ display: 'flex', gap: '0.5rem', width: '100%', maxWidth: '580px', marginBottom: '1rem' }}>
@@ -177,11 +177,11 @@ export default function PowerBIReports() {
             </div>
 
             <div style={{ display: 'flex', gap: '1rem', fontSize: '0.78rem', color: '#64748B' }}>
-              <span>Server: <code>127.0.0.1:3306</code></span>
+              <span>Database: <code>PostgreSQL (Port 5432)</code></span>
               <span>•</span>
-              <span>Database: <code>retailiq_db</code></span>
+              <span>Schema: <code>Star Schema (retailiq_db)</code></span>
               <span>•</span>
-              <span>Schema: <code>Star Schema</code></span>
+              <span>Connector: <code>PostgreSQL DirectQuery / Import</code></span>
             </div>
           </div>
         )}

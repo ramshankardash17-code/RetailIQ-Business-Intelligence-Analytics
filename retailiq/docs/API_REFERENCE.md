@@ -136,7 +136,7 @@ Predicts the likelihood that a customer will place a repeat purchase within 30â€
 ## 4. Ingestion & Insights Endpoints
 
 ### `POST /api/upload`
-Ingests a CSV or XLSX dataset containing sales or inventory updates into MySQL with full ACID validation and reporting.
+Ingests a CSV or XLSX dataset containing sales or inventory updates into PostgreSQL with full ACID validation and reporting.
 
 ### `GET /api/insights/rule-based`
 Executes deterministic mathematical business heuristics against database tables to produce actionable operational directives.
