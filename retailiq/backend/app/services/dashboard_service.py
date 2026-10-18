@@ -113,61 +113,69 @@ class DashboardService:
         aov_delta = round(((aov - prev_aov) / prev_aov * 100), 1) if prev_aov > 0 else 2.1
 
         kpis = DashboardSummaryResponse(
-            gross_revenue=KPIMetric(
+            total_revenue=KPIMetric(
                 label="Gross Revenue",
                 value=tot_rev,
                 formatted=f"${tot_rev:,.0f}",
-                prior_period_value=prev_rev,
-                change_pct=rev_delta,
-                trend="up" if rev_delta >= 0 else "down"
+                previous_value=prev_rev,
+                delta_pct=rev_delta,
+                is_positive=bool(rev_delta >= 0)
             ),
-            net_profit=KPIMetric(
+            total_profit=KPIMetric(
                 label="Net Profit",
                 value=tot_prof,
                 formatted=f"${tot_prof:,.0f}",
-                prior_period_value=prev_prof,
-                change_pct=prof_delta,
-                trend="up" if prof_delta >= 0 else "down"
+                previous_value=prev_prof,
+                delta_pct=prof_delta,
+                is_positive=bool(prof_delta >= 0)
             ),
-            profit_margin_pct=KPIMetric(
+            profit_margin=KPIMetric(
                 label="Operating Margin",
                 value=margin_pct,
                 formatted=f"{margin_pct:.1f}%",
-                prior_period_value=prev_margin,
-                change_pct=margin_delta,
-                trend="up" if margin_delta >= 0 else "down"
+                previous_value=prev_margin,
+                delta_pct=margin_delta,
+                is_positive=bool(margin_delta >= 0)
             ),
             total_orders=KPIMetric(
                 label="Transaction Orders",
                 value=float(tot_ord),
                 formatted=f"{tot_ord:,}",
-                prior_period_value=float(prev_ord),
-                change_pct=ord_delta,
-                trend="up" if ord_delta >= 0 else "down"
+                previous_value=float(prev_ord),
+                delta_pct=ord_delta,
+                is_positive=bool(ord_delta >= 0)
             ),
             average_order_value=KPIMetric(
                 label="Average Order Value",
                 value=aov,
                 formatted=f"${aov:.2f}",
-                prior_period_value=prev_aov,
-                change_pct=aov_delta,
-                trend="up" if aov_delta >= 0 else "down"
+                previous_value=prev_aov,
+                delta_pct=aov_delta,
+                is_positive=bool(aov_delta >= 0)
             ),
             unique_customers=KPIMetric(
                 label="Active Customers",
                 value=float(tot_cust),
                 formatted=f"{tot_cust:,}",
-                prior_period_value=float(prev_cust),
-                change_pct=cust_delta,
-                trend="up" if cust_delta >= 0 else "down"
+                previous_value=float(prev_cust),
+                delta_pct=cust_delta,
+                is_positive=bool(cust_delta >= 0)
             ),
-            total_units_sold=KPIMetric(
+            units_sold=KPIMetric(
                 label="Merchandise Units Sold",
                 value=float(tot_units),
                 formatted=f"{tot_units:,}",
-                prior_period_value=float(prev_units),
-                change_pct=units_delta,
-                trend="up" if units_delta >= 0 else "down"
+                previous_value=float(prev_units),
+                delta_pct=units_delta,
+                is_positive=bool(units_delta >= 0)
+            ),
+            yoy_growth=KPIMetric(
+                label="YoY Revenue Growth",
+                value=rev_delta,
+                formatted=f"{rev_delta:+.1f}%",
+                previous_value=prev_rev,
+                delta_pct=rev_delta,
+                is_positive=bool(rev_delta >= 0)
             )
         )
 

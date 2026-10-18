@@ -19,8 +19,10 @@ export function getResolvedBackendRoot() {
   if (typeof window !== 'undefined' && window.location) {
     const hostname = window.location.hostname;
     if (hostname.endsWith('.onrender.com')) {
-      // Translates retailiq-frontend.onrender.com -> retailiq-backend.onrender.com
-      const backendHost = hostname.replace('frontend', 'backend');
+      let backendHost = hostname.replace('frontend', 'backend');
+      if (backendHost === 'retailiq-backend.onrender.com') {
+        backendHost = 'retailiq-backend-bwi5.onrender.com';
+      }
       return `https://${backendHost}`;
     }
   }
